@@ -4,6 +4,16 @@
 /**
  * @file
  * Enables the handling of projects and their cases.
+ *
+ * TODO the 2.x rewrite
+ *   - make case metadata exportable
+ *      - string identifies for case states
+ *   - make case metadata localizable and/or translatable
+ *   - make case metadata extensible
+ *      - new types (support due dates, time estimates)
+ *      - easily overridable (custom states per group)
+ *   - support notifications/messaging
+ *   - support mailhandler
  */
 
 /**
