@@ -74,10 +74,20 @@ function casetracker_schema() {
       'weight' => array('weight'),
     ),
     'primary key' => array('csid'),
+    'export' => array(
+      'key' => 'name',
+    ),
   );
 
   $schema['casetracker_case_status'] = array(
     'fields' => array(
+      'nid' => array(
+        'description' => 'The {node} for the case.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'type' => array(
         'description' => 'The type of update, generally NODE or COMMENT',
         'type' => 'varchar',
@@ -109,6 +119,21 @@ function casetracker_schema() {
     ),
     'indexes' => array(
       'type_id' => array('type', 'id'),
+    ),
+  );
+
+  $schema['casetracker_templates'] = array(
+    'fields' => array(
+      'tid' => array('type' => 'serial','unsigned' => TRUE, 'not null' => TRUE),
+      'name' => array('type' => 'varchar', 'length' => 32),
+      'properties' => array('type' => 'text', 'size' => 'big'),
+    ),
+    'primary key' => array('tid'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
+    'export' => array(
+      'key' => 'name',
     ),
   );
 
@@ -201,5 +226,8 @@ function casetracker_update_6003() {
   db_change_field($ret, 'casetracker_states', 'csid', 'id', $table['fields']['id']);
   db_change_field($ret, 'casetracker_states', 'case_state_name', 'name', $table['fields']['name']);
   db_change_field($ret, 'casetracker_states', 'case_state_realm', 'realm', $table['fields']['realm']);
+  
+  $table = drupal_get_schema('casetracker_templates', true);
+  db_create_table($ret, 'casetracker_templates', $table);
   return $ret;
 }

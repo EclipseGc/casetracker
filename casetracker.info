@@ -4,4 +4,4 @@ description = "Enables the handling of projects and their cases."
 core = 6.x
 package = "Case Tracker"
 dependencies[] = views
-
+dependencies[] = ctools
