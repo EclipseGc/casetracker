@@ -72,46 +72,111 @@ function casetracker_menu() {
     'weight' => -10,
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
-  /* casetracker state handling */
+  $items['admin/settings/casetracker/templates'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'casetracker_templates_page',
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Templates',
+    'description' => 'Add, edit and delete meta-data templates ',
+  );
+  $items['admin/settings/casetracker/templates/list'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'casetracker_templates_page',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'title' => 'List',
+    'weight' => -10,
+    'description' => 'Add, edit and delete meta-data templates ',
+  );
+  $items['admin/settings/casetracker/templates/add'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_template_edit'),
+    'title' => 'Add case template',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/settings/casetracker/templates/%casetracker_template/clone'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_template_edit', 4, FALSE),
+    'title' => 'Edit case template',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/casetracker/templates/%casetracker_template/edit'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_template_edit', 4),
+    'title' => 'Edit case template',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/casetracker/templates/%casetracker_template/delete'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_template_confirm_delete', 4),
+    'title' => 'Delete case state',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/casetracker/templates/%casetracker_template/disable'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_template_confirm_disable', 4),
+    'title' => 'Disable case state',
+    'type' => MENU_CALLBACK,
+  );
   $items['admin/settings/casetracker/states'] = array(
     'file' => 'casetracker_admin.inc',
     'access arguments' => array('administer case tracker'),
-    'page callback' => 'casetracker_case_state_overview',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_states', 4),
     'type' => MENU_LOCAL_TASK,
-    'title' => 'Case states',
-    'description' => 'Add, edit and delete Case States, Types and Priorities',
+    'title' => 'States',
+    'description' => 'Add, edit and delete meta-data templates ',
   );
   $items['admin/settings/casetracker/states/list'] = array(
     'file' => 'casetracker_admin.inc',
     'access arguments' => array('administer case tracker'),
-    'page callback' => 'casetracker_case_state_overview',
+    'page callback' => 'casetracker_states_page',
     'type' => MENU_DEFAULT_LOCAL_TASK,
-    'title' => 'Overview',
+    'title' => 'List',
     'weight' => -10,
-    'description' => 'Add, edit and delete Case States, Types and Priorities',
+    'description' => 'Add, edit and delete meta-data templates ',
   );
   $items['admin/settings/casetracker/states/add'] = array(
     'file' => 'casetracker_admin.inc',
     'access arguments' => array('administer case tracker'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('casetracker_case_state_edit'),
+    'page arguments' => array('casetracker_state_edit'),
     'title' => 'Add case state',
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/settings/casetracker/states/edit/%casetracker_case_state'] = array(
+  $items['admin/settings/casetracker/states/%casetracker_state/edit'] = array(
     'file' => 'casetracker_admin.inc',
     'access arguments' => array('administer case tracker'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('casetracker_case_state_edit', 5),
+    'page arguments' => array('casetracker_state_edit', 4),
     'title' => 'Edit case state',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/settings/casetracker/states/delete/%casetracker_case_state'] = array(
+  $items['admin/settings/casetracker/states/%casetracker_state/delete'] = array(
     'file' => 'casetracker_admin.inc',
     'access arguments' => array('administer case tracker'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('casetracker_case_state_confirm_delete', 5),
+    'page arguments' => array('casetracker_case_state_confirm_delete', 4),
     'title' => 'Delete case state',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/casetracker/states/%casetracker_state/disable'] = array(
+    'file' => 'casetracker_admin.inc',
+    'access arguments' => array('administer case tracker'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('casetracker_case_state_confirm_disable', 4),
+    'title' => 'Disable case state',
     'type' => MENU_CALLBACK,
   );
   /* casetracker autocomplete */
@@ -455,6 +520,15 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
 }
 
 /**
+ * Load a single casetracker template.
+ */
+function casetracker_template_load($name) {
+  ctools_include('export');
+  $templates = ctools_export_load_object('casetracker_templates', 'names', array($name));
+  return array_shift($templates);
+}
+
+/**
 * Implementation of hook_block
 */
 function casetracker_block($op = 'list', $delta = 0, $edit = array()) {
@@ -523,7 +597,7 @@ function casetracker_block_jump_to_case_number_submit($form, $form_state) {
  * Returns information about the various case states and their options.
  * The number of parameters passed will determine the return value.
  *
- * @param $csid
+ * @param $name
  *   Optional; the state ID to return from the passed $realm.
  * @param $realm
  *   Optional; the name of the realm ('status', 'priority', or 'type').
@@ -536,29 +610,19 @@ function casetracker_block_jump_to_case_number_submit($form, $form_state) {
  *   is also passed, you'll receive just a string of the state name.
  *   If ONLY a $csid is passed, we'll return a list of 'name', 'realm'.
  */
-function casetracker_case_state_load($csid = NULL, $realm = NULL, $reset = FALSE) {
-  static $states_lookup;
+function casetracker_state_load($name = NULL, $realm = NULL, $reset = FALSE) {
+  ctools_include('export');
 
-  if (!$states_lookup || $reset) {
-    $results = db_query("SELECT csid, case_state_name AS name, case_state_realm AS realm, weight 
-                         FROM {casetracker_case_states} ORDER BY weight");
-    $states_lookup = array();
-    while ($row = db_fetch_object($results)) {
-      $states_lookup[$row->realm][$row->csid] = $states_lookup['all'][$row->csid] = $row;
-    }
+  if ($name) {
+    $states = ctools_export_load_object('casetracker_states', 'names', array($name));
+    return array_shift($states);
   }
-
-  if ($csid && $realm) {
-    return $states_lookup['all'][$csid]->name;
-  }
-  elseif ($csid && !$realm) {
-    return $states_lookup['all'][$csid];
-  }
-  elseif (!$csid && $realm) {
+  elseif (!$name && $realm) {
+    $states = ctools_export_load_object('casetracker_states', 'conditions', array('realm' => $realm));
     $options = array(); // suitable for form api.
-    if (!empty($states_lookup[$realm])) {
-      foreach ($states_lookup[$realm] as $state) {
-        $options[$state->csid] = $state->name;
+    if (!empty($states)) {
+      foreach ($states as $s) {
+        $options[$s->name] = $s->title;
       }
     }
     return $options;
@@ -574,35 +638,7 @@ function casetracker_case_state_load($csid = NULL, $realm = NULL, $reset = FALSE
  *   array with the keys being the state ID and the values being their names.
  */
 function casetracker_realm_load($realm) {
-  return casetracker_case_state_load(null, $realm);
-}
-
-/**
- * Saves a case state.
- *
- * @param $case_state
- *   An array containing 'name' and 'realm' keys. If no 'csid'
- *   is passed, a new state is created, otherwise, we'll update
- *   the record that corresponds to that ID.
- */
-function casetracker_case_state_save($case_state = NULL) {
-  if (!$case_state['name'] || !$case_state['realm']) { 
-    return NULL; 
-  }
-  // Need to collect information into another array since the db columns have different names : (
-  $record = array(
-    'case_state_name' => $case_state['name'],
-    'case_state_realm' => $case_state['realm'],
-    'weight' => $case_state['weight'],
-  );
-  if (isset($case_state['csid'])) {
-    $record['csid'] = $case_state['csid']; 
-    drupal_write_record('casetracker_case_states', $record, array('csid'));
-  }
-  else {
-    drupal_write_record('casetracker_case_states', $record);
-  }
-  return $result;
+  return casetracker_state_load(null, $realm);
 }
 
 /**
@@ -613,12 +649,12 @@ function casetracker_case_state_save($case_state = NULL) {
  * reset them to the default per our settings (and warn the user on our
  * confirmation page), or something else entirely.
  * 
- * @param $csid
+ * @param $name
  *   The case state ID to delete.
  */
-function casetracker_case_state_delete($csid = NULL) {
+function casetracker_state_delete($name = NULL) {
   if (!empty($csid)) {
-    db_query('DELETE FROM {casetracker_case_states} WHERE csid = %d', $csid);
+    db_query('DELETE FROM {casetracker_case_states} WHERE name = %d', $name);
   }
 }
 
@@ -696,6 +732,7 @@ function casetracker_theme() {
     'casetracker_case_form_common' => array(),
     'casetracker_case_summary' => array(),
     'casetracker_project_summary' => array(),
+    'casetracker_states_form' => array(),
   );
 }
 

@@ -20,14 +20,14 @@ function casetracker_basic_node_info() {
   return array(
     'casetracker_basic_project' => array(
       'name'        => t('Project'),
-      'module'      => 'casetracker_basic_project',
+      'module'      => 'node',
       'description' => t('Create a basic project for use with Case Tracker.'),
       'help'        => t('Create a basic project for use with Case Tracker.'),
       'body_label'  => t('Description'),
     ),
     'casetracker_basic_case' => array(
       'name'        => t('Case'),
-      'module'      => 'casetracker_basic_case',
+      'module'      => 'node',
       'description' => t('Open a new case assigned to a particular project.'),
       'help'        => t('Open a new case assigned to a particular project.'),
       'body_label'  => t('Description'),
@@ -36,79 +36,42 @@ function casetracker_basic_node_info() {
 }
 
 /**
- * Implementation of hook_form().
+ * Implementation of hook_default_casetracker_templates()
  */
-function casetracker_basic_project_form(&$node) {
-  $form = array();
-  if (casetracker_is_project($node->type)) {
-    $type = node_get_types('type', $node);
-    $form['title'] = array('#type' => 'textfield', '#title' => check_plain($type->title_label), '#required' => TRUE, '#default_value' => !empty($node->title) ? $node->title : NULL, '#weight' => -5);
-    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
-  }
-  return $form;
+function casetracker_basic_default_casetracker_templates() {
+  $templates = array();
+  $template = new stdClass();
+  $template->name = 'basic';
+  $template->properties = array();
+  $property = new stdClass();
+  $property->module = 'casetracker';
+  $property->type = 'state';
+  $property->id = 'status';
+  $property->options = array('open', 'closed');
+  $property->default = 'open';
+  $template->properties[] = $property;
+  $templates['basic'] = $template;
+  return $templates;
 }
 
 /**
- * Implementation of hook_form().
+ * Implementation of hook_default_casetracker_states()
  */
-function casetracker_basic_case_form(&$node) {
-  $form = array();
-  if (casetracker_is_case($node->type)) {
-    $type = node_get_types('type', $node);
-    $form['title'] = array('#type' => 'textfield', '#title' => check_plain($type->title_label), '#required' => TRUE, '#default_value' => !empty($node->title) ? $node->title : NULL, '#weight' => -5);
-    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
-  }
-  return $form;
-}
-
-/**
- *  Implementation of hook_access().
- */
-function casetracker_basic_project_access($op, $node, $account) {
-  switch ($op) {
-    case 'create':
-      return user_access('create projects', $account);
-      break;
-    case 'update':
-    case 'delete':
-      if (user_access('edit own projects', $account) && ($account->uid == $node->uid)) {
-        return TRUE;
-      }
-      break;
-  }
-}
-
-/**
- * Implementation of hook_access().
- */
-function casetracker_basic_case_access($op, $node) {
-  global $user;
-
-  switch ($op) {
-    case 'view':
-      // we have to check if the OG module is installed, otherwise this will
-      // overule the OG nodeaccess
-      if (!module_exists('og')) {
-        return user_access('access case tracker');
-      }
-      // we check if the case isn't created by the current user or is
-      // assigned to the current user, if so that user gets access
-      elseif (
-        user_access('access case tracker')
-        && 0 < (int)$user->uid
-        && ((int)$node->casetracker->assign_to === (int)$user->uid
-           || (int)$node->uid === (int)$user->uid)
-      ) {
-        return TRUE;
-      }
-      break;
-    case 'create':
-      return user_access('create cases');
-    case 'update':
-    case 'delete':
-      if (user_access('edit own cases') && ($user->uid == $node->uid)) {
-        return TRUE;
-      }
-      break;
-  }
+function casetracker_basic_default_casetracker_states() {
+  $properties = array();
+  $property = new stdClass();
+  $property->name = 'closed';
+  $property->title = t('Closed');
+  $property->realm = 'status';
+  $property->weight = 1;
+  $properties[] = $property;
+  
+  $property = new stdClass();
+  $property->name = 'open';
+  $property->title = t('Open');
+  $property->realm = 'status';
+  $property->weight = 1;
+  $properties[] = $property;
+  
+  return $properties;
 }

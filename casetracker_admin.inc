@@ -5,39 +5,10 @@
  * Configures the various Case Tracker options; system_settings_form().
  */
 function casetracker_settings() {
-  $form = array();
-
-  $form['casetracker_general'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('General settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $form['casetracker_general']['casetracker_default_assign_to'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Default assigned user'),
-    '#autocomplete_path' => 'casetracker_autocomplete',
-    '#required' => TRUE,
-    '#default_value' => variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous'))),
-    '#description' => t('User to be assigned the case if one is not explicitly defined.'),
-  );
-
-  foreach (array('priority', 'status', 'type') as $realm) {
-    $options = casetracker_realm_load($realm);
-    $temp_keys = array_keys($options);
-    $form['casetracker_general']['casetracker_default_case_'. $realm] = array(
-      '#type' => 'select',
-      '#options' => $options,
-      '#title' => t('Default case %realm', array('%realm' => $realm)),
-      '#default_value' => variable_get('casetracker_default_case_'. $realm, array_shift($temp_keys)),
-      '#description' => t('%realm to be assigned the case if one is not explicitly defined.', array('%realm' => ucfirst($realm))),
-    );
-  };
-
   $node_types = node_get_types('names');
 
   $project_types = $node_types; unset($project_types['casetracker_basic_case']);
-  $form['casetracker_general']['casetracker_project_node_types'] = array(
+  $form['casetracker_project_node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Project node types'),
     '#options' => $project_types,
@@ -46,39 +17,83 @@ function casetracker_settings() {
   );
 
   $case_types = $node_types; unset($case_types['casetracker_basic_project']);
-  $form['casetracker_general']['casetracker_case_node_types'] = array(
+  $form['casetracker_case_node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Case node types'),
     '#options' => $case_types,
     '#default_value' => variable_get('casetracker_case_node_types', array('casetracker_basic_case')),
     '#description' => t('Select the node types that will be considered Case Tracker cases.'),
   );
-  
-  $all_views = views_get_all_views();
-  $node_views = array();
-  $user_views = array();
-  foreach($all_views AS $view) {
-    if($view->base_table == 'node') {
-      $node_views[$view->name] = $view->name;
-    } else if($view->base_table = 'users') {
-      $user_views[$view->name] = $view->name;
-    }
+
+  ctools_include('export');
+  $templates = ctools_export_load_object('casetracker_templates', 'all');
+  $options = array();
+  foreach ($templates as $v) {
+    $options[] = $v->name;
   }
-  $form['casetracker_general']['casetracker_view_project_options'] = array(
+  $default = variable_get('casetracker_default_template', '');
+  $default = isset($templates[$default]) ? $templates[$default] : null;
+
+  $form = array();
+  $form['casetracker_default_template'] = array(
     '#type' => 'select',
-    '#title' => t('Project options view'),
-    '#options' => $node_views,
-    '#default_value' => variable_get('casetracker_view_project_options', 'casetracker_project_options'),
-    '#description' => t('Select the view from which to fill the project selector on the add case page.'),
+    '#title' => t('Default case template'),
+    '#options' => $options,
+    '#default_value' => $default,
   );
-  
-  $form['casetracker_general']['casetracker_view_assignee_options'] = array(
-    '#type' => 'select',
-    '#title' => t('Assignee options view'),
-    '#options' => $user_views,
-    '#default_value' => variable_get('casetracker_view_assignee_options', 'casetracker_assignee_options'),
-    '#description' => t('Select the view from which to fill the user assignment options on the add case page.'),
-  );
+
+  // $form['casetracker_general'] = array(
+  //   '#type' => 'fieldset',
+  //   '#title' => t('General settings'),
+  //   '#collapsible' => TRUE,
+  //   '#collapsed' => FALSE,
+  // );
+  // $form['casetracker_general']['casetracker_default_assign_to'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Default assigned user'),
+  //   '#autocomplete_path' => 'casetracker_autocomplete',
+  //   '#required' => TRUE,
+  //   '#default_value' => variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous'))),
+  //   '#description' => t('User to be assigned the case if one is not explicitly defined.'),
+  // );
+  // 
+  // foreach (array('priority', 'status', 'type') as $realm) {
+  //   $options = casetracker_realm_load($realm);
+  //   $temp_keys = array_keys($options);
+  //   $form['casetracker_general']['casetracker_default_case_'. $realm] = array(
+  //     '#type' => 'select',
+  //     '#options' => $options,
+  //     '#title' => t('Default case %realm', array('%realm' => $realm)),
+  //     '#default_value' => variable_get('casetracker_default_case_'. $realm, array_shift($temp_keys)),
+  //     '#description' => t('%realm to be assigned the case if one is not explicitly defined.', array('%realm' => ucfirst($realm))),
+  //   );
+  // };
+  // 
+  // $all_views = views_get_all_views();
+  // $node_views = array();
+  // $user_views = array();
+  // foreach($all_views AS $view) {
+  //   if($view->base_table == 'node') {
+  //     $node_views[$view->name] = $view->name;
+  //   } else if($view->base_table = 'users') {
+  //     $user_views[$view->name] = $view->name;
+  //   }
+  // }
+  // $form['casetracker_general']['casetracker_view_project_options'] = array(
+  //   '#type' => 'select',
+  //   '#title' => t('Project options view'),
+  //   '#options' => $node_views,
+  //   '#default_value' => variable_get('casetracker_view_project_options', 'casetracker_project_options'),
+  //   '#description' => t('Select the view from which to fill the project selector on the add case page.'),
+  // );
+  // 
+  // $form['casetracker_general']['casetracker_view_assignee_options'] = array(
+  //   '#type' => 'select',
+  //   '#title' => t('Assignee options view'),
+  //   '#options' => $user_views,
+  //   '#default_value' => variable_get('casetracker_view_assignee_options', 'casetracker_assignee_options'),
+  //   '#description' => t('Select the view from which to fill the user assignment options on the add case page.'),
+  // );
   
   $form['#submit'][] = 'casetracker_settings_submit';
   return system_settings_form($form);
@@ -97,96 +112,204 @@ function casetracker_settings_submit($form, $form_state) {
 /**
  * Displays a form for adding or editing a case state.
  */
-function casetracker_case_state_edit($form_state, $case_state = NULL) {
-
+function casetracker_template_edit($form_state, $template = NULL) {
   $form = array();
-  $form['case_state'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Case state'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $form['case_state']['name'] = array(
+  $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('State name'),
+    '#title' => t('Template name'),
     '#required' => TRUE,
-    '#default_value' => isset($case_state) ? $case_state->name : NULL,
-    '#description' => t('The name for this case state. Example: "Resolved".'),
+    '#default_value' => isset($template) ? $template->name : NULL,
+    '#description' => t('The name for this case template.'),
   );
-  $form['case_state']['realm'] = array(
-    '#type' => 'select',
-    '#title' => t('State realm'),
-    '#required'  => TRUE,
-    '#default_value' => isset($case_state) ? $case_state->realm : NULL,
-    '#description' => t('The realm in which this case state will appear.'),
-    '#options' => array('priority' => t('priority'), 'status' => t('status'), 'type' => t('type')),
-  );
-  $form['case_state']['weight'] = array(
-    '#type' => 'weight',
-    '#title' => t('Weight'),
-    '#default_value' => isset($case_state) ? $case_state->weight : 0,
-    '#description' => t('States are ordered first by weight and then by state name.'),
-  );
-
-  if ($case_state) { 
-    $form['csid'] = array(
-      '#type' => 'value', 
-      '#value' => $case_state->csid,
-    ); 
+  foreach ($template->properties as $property) {
+    $form[$property->id] = array();
+    $form[$property->id][] = array(
+      '#value' => $property->module .'-'.$property->type,
+    );
+    $form[$property->id]['default'] = array(
+      '#title' => t('Default value'),
+      '#type' => 'select',
+      '#options' => array(),
+    );
+    $form[$property->id]['options'] = array(
+      '#title' => t('Options'),
+      '#type' => 'select',
+      '#options' => array(),
+    );
   }
+
   $form['submit'] = array(
     '#type' => 'submit', 
-    '#value' => t('Submit'), // this text is an easter egg.
-  ); 
+    '#value' => t('Submit'),
+  );
+
+  $form['add'] = array();
 
   return $form;
 }
 
 /**
+ * Displays an administrative overview of all case templates available.
+ */
+function casetracker_templates_page() {
+  ctools_include('export');
+  $templates = ctools_export_load_object('casetracker_templates', 'all');
+
+  $rows = array(); 
+  $headers = array(t('Name'), t('Status'), array('data' => t('Operations'), 'colspan' => 3));
+  foreach ($templates as $t) {
+    $row = array();
+    $row[] = check_plain($t->name);
+    $row[] = check_plain($t->type);
+    if ($t->in_code_only) {
+      $row[] = l(t('clone'), 'admin/settings/casetracker/templates/'. $t->name .'/clone');
+      $row[] = l(t('disable'), 'admin/settings/casetracker/templates/'. $t->name .'/disable');
+    }
+    else {
+      $row[] = l(t('edit'), 'admin/settings/casetracker/templates/'. $t->name .'/edit');
+      $row[] = l(t('delete'), 'admin/settings/casetracker/templates/'. $t->name .'/delete');
+    }
+    $row[] = l(t('export'), 'admin/settings/casetracker/templates/'. $t->name .'/export');
+    $rows[] = $row;
+  }
+  return theme('table', $headers, $rows);
+}
+
+/**
  * Displays an administrative overview of all case states available.
  */
-function casetracker_case_state_overview() {
-  $rows = array(); 
-  $headers = array(
-    t('Name'), 
-    t('Realm'), 
-    array(
-      'data' => t('Operations'), 
-      'colspan' => 2)
+function casetracker_states() {
+  ctools_include('export');
+  $states = ctools_export_load_object('casetracker_states', 'all');
+
+  $form = array('#theme' => 'casetracker_states_form'); 
+  foreach ($states as $s) {
+    $form[$s->name] = array();
+    $form[$s->name]['title'] = array(
+      '#value' => $s->title .' ('. $s->name .')',
     );
-  foreach (array('priority', 'status', 'type') as $realm) {
-    foreach (casetracker_realm_load($realm) as $csid => $name) {
-      $rows[] = array(
-        t($name), 
-        $realm,
-        l(t('edit'), 'admin/settings/casetracker/states/edit/'. $csid),
-        l(t('delete'), 'admin/settings/casetracker/states/delete/'. $csid), );
+    $form[$s->name]['realm'] = array(
+      '#type' => 'select',
+      '#title' => t('Realm'),
+      '#options' => array($s->realm),
+      '#value' => $s->realm,
+    );
+    $form[$s->name]['weight'] = array(
+      '#type' => 'select',
+      '#title' => t('Weight'),
+      '#options' => array($s->weight),
+      '#value' => $s->weight,
+      '#attributes' => array('class' => "state-weight state-weight-{$s->region}"),
+    );
+    $form[$s->name]['type'] = array('#value' => $s->type);
+    if ($s->in_code_only) {
+      $ops = l(t('clone'), 'admin/settings/casetracker/states/'. $s->name .'/clone');
+      $ops .= ' | '. l(t('disable'), 'admin/settings/casetracker/states/'. $s->name .'/disable');
     }
+    else {
+      $ops = l(t('edit'), 'admin/settings/casetracker/states/'. $s->name .'/edit');
+      $ops .= ' | '. l(t('delete'), 'admin/settings/casetracker/states/'. $s->name .'/delete');
+    }
+    $ops .= ' | '. l(t('export'), 'admin/settings/casetracker/states/'. $s->name .'/export');
+    $form[$s->name]['operations'] = array('#value' => $ops);
   }
 
-  return theme('table', $headers, $rows);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  $form['realm'] = array(
+    '#tree' => 'true',
+    '#type' => 'fieldset',
+  );
+  $form['realm']['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Realm name'),
+    '#description' => t('Add a new realm'),
+  );
+  $form['realm']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add'),
+  );
+  return $form;
+}
+
+/**
+ * Theme states admin interface as table.
+ */
+function theme_casetracker_states_form($form) {
+  $o = drupal_render($form['realm']) . drupal_render($form['submit']);
+  $rows = array();
+  foreach (element_children($form) as $i) {
+    $row = array();
+    foreach(element_children($form[$i]) as $j) {
+      $row[] = drupal_render($form[$i][$j]);
+    }
+    $rows[] = array('data' => $row, 'class' => 'draggable');
+  }
+  $o = theme('table', array(), $rows, array('id' => 'casetracker_states_admin')) . $o;
+  $o .= drupal_render($form);
+
+  drupal_add_tabledrag('casetracker_states_admin', 'order', 'sibling', 'state-weight');
+  return $o;
+}
+
+/**
+ * Displays a form for adding or editing a case state.
+ */
+function casetracker_state_edit($form_state, $state = NULL) {
+  $form = array();
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('State title'),
+    '#required' => TRUE,
+    '#default_value' => isset($state) ? $state->title : NULL,
+    '#description' => t('The title for this case template.'),
+  );
+
+  if ($state) {
+    $form['existing_name'] = array(
+      '#type' => 'value',
+      '#default_value' => $state->name,
+    );
+    $form['title']['#description'] .= ' '.t('Machine name: %name', array('%name' => $state->name));
+  }
+  else {
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('State name'),
+      '#required' => TRUE,
+      '#default_value' => isset($state) ? $state->name : NULL,
+      '#description' => t('The machine name for this case template.'),
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Submit'),
+  );
+
+  return $form;
 }
 
 /**
  * Processes the submitted results of our case state addition or editing.
  */
-function casetracker_case_state_edit_submit($form, &$form_state) {
-  $case_state = array(
-    'name' => $form_state['values']['name'], 
-    'realm' => $form_state['values']['realm'],
-    'weight' => $form_state['values']['weight'],
+function casetracker_state_edit_submit($form, &$form_state) {
+  $state = array(
+    'title' => $form_state['values']['title'], 
   );
 
-  if (!empty($form_state['values']['csid'])) {
-    // Update
-    $case_state['csid'] = $form_state['values']['csid'];
+  if (!empty($form_state['values']['existing_name'])) {
+    $state['name'] = $form_state['values']['existing_name'];
+    drupal_write_record('casetracker_states', $state, array('name'));
     drupal_set_message(t('The case state %name has been updated.', array('%name' =>  $form_state['values']['name'])));
   }
   else {
-    // Create
+    $state['name'] = $form_state['values']['name'];
+    drupal_write_record('casetracker_states', $state);
     drupal_set_message(t('The case state %name has been created.', array('%name' =>  $form_state['values']['name'])));
   }
-  casetracker_case_state_save($case_state);
   $form_state['redirect'] = 'admin/settings/casetracker/states';
 }
 
