@@ -181,27 +181,31 @@ function casetracker_templates_page() {
 function casetracker_states() {
   ctools_include('export');
   $states = ctools_export_load_object('casetracker_states', 'all');
-
-  $form = array('#theme' => 'casetracker_states_form'); 
+  $form = array('#theme' => 'casetracker_states_form');
+  $form['states'] = array('#tree' => true);
   foreach ($states as $s) {
-    $form[$s->name] = array();
-    $form[$s->name]['title'] = array(
+    $item = array();
+    $item['title'] = array(
       '#value' => $s->title .' ('. $s->name .')',
+      '#title' => t('State'),
     );
-    $form[$s->name]['realm'] = array(
+    $item['realm'] = array(
       '#type' => 'select',
       '#title' => t('Realm'),
-      '#options' => array($s->realm),
+      '#options' => casetracker_realm_list(),
       '#value' => $s->realm,
     );
-    $form[$s->name]['weight'] = array(
+    $item['weight'] = array(
       '#type' => 'select',
       '#title' => t('Weight'),
       '#options' => array($s->weight),
       '#value' => $s->weight,
-      '#attributes' => array('class' => "state-weight state-weight-{$s->region}"),
+      '#attributes' => array('class' => "state-weight state-weight-{$s->realm}"),
     );
-    $form[$s->name]['type'] = array('#value' => $s->type);
+    $item['type'] = array(
+      '#title' => t('Status'),
+      '#value' => $s->type,
+    );
     if ($s->in_code_only) {
       $ops = l(t('clone'), 'admin/settings/casetracker/states/'. $s->name .'/clone');
       $ops .= ' | '. l(t('disable'), 'admin/settings/casetracker/states/'. $s->name .'/disable');
@@ -211,7 +215,12 @@ function casetracker_states() {
       $ops .= ' | '. l(t('delete'), 'admin/settings/casetracker/states/'. $s->name .'/delete');
     }
     $ops .= ' | '. l(t('export'), 'admin/settings/casetracker/states/'. $s->name .'/export');
-    $form[$s->name]['operations'] = array('#value' => $ops);
+    $item['operations'] = array('#value' => $ops, '#title' => t('Operations'));
+
+    if (!isset($form['states'][$s->realm])) {
+      $form['states'][$s->realm] = array();
+    }
+    $form['states'][$s->realm][$s->name] = $item;
   }
 
   $form['submit'] = array(
@@ -221,15 +230,20 @@ function casetracker_states() {
   $form['realm'] = array(
     '#tree' => 'true',
     '#type' => 'fieldset',
+    '#description' => t('Add a new realm'),
+  );
+  $form['realm']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Realm'),
   );
   $form['realm']['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('Realm name'),
-    '#description' => t('Add a new realm'),
+    '#title' => t('Machine name'),
   );
   $form['realm']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Add'),
+    '#submit' => array('casetracker_realm_add_submit'),
   );
   return $form;
 }
@@ -240,18 +254,46 @@ function casetracker_states() {
 function theme_casetracker_states_form($form) {
   $o = drupal_render($form['realm']) . drupal_render($form['submit']);
   $rows = array();
-  foreach (element_children($form) as $i) {
-    $row = array();
-    foreach(element_children($form[$i]) as $j) {
-      $row[] = drupal_render($form[$i][$j]);
+  $header = array();
+  foreach (element_children($form['states']) as $realm) {
+    if (!empty($realm)) {
+      drupal_add_tabledrag('casetracker_states_admin', 'order', 'sibling', "state-weight", "state-weight-$realm");
     }
-    $rows[] = array('data' => $row, 'class' => 'draggable');
+    // $rows[] = array(array(
+    //   'data' => !empty($realm) ? $realm : t('None'), 
+    //   'colspan' => count($form['states'][$realm][$i])
+    // ));
+    foreach (element_children($form['states'][$realm]) as $i) {
+      $row = array();
+      foreach(element_children($form['states'][$realm][$i]) as $j) {
+        if (!isset($header[$j])) {
+          $header[$j] = $form['states'][$realm][$i][$j]['#title'];
+        }
+        unset($form['states'][$realm][$i][$j]['#title']);
+        $row[] = drupal_render($form['states'][$realm][$i][$j]);
+      }
+      $rows[] = array('data' => $row, 'class' => 'draggable');
+    }
   }
-  $o = theme('table', array(), $rows, array('id' => 'casetracker_states_admin')) . $o;
+  $o = theme('table', $header, $rows, array('id' => 'casetracker_states_admin')) . $o;
   $o .= drupal_render($form);
 
-  drupal_add_tabledrag('casetracker_states_admin', 'order', 'sibling', 'state-weight');
   return $o;
+}
+
+/**
+ * Create new casetracker realm
+ */
+function casetracker_realm_add_submit($form, &$form_state) {
+  $realms = variable_get('casetracker_realms', array());
+
+  $name = $form_state['values']['realm']['name'];
+  $title = $form_state['values']['realm']['title'];
+
+  // Add the new realm.
+  $realms[$name] = $title;
+  variable_set('casetracker_realms', $realms);
+  drupal_set_message(t('Updated realm: %title', array('%title' => $title)));
 }
 
 /**

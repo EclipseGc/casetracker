@@ -591,6 +591,8 @@ function casetracker_block_jump_to_case_number_submit($form, $form_state) {
 
 /**
  * CASE STATE CRUD ====================================================
+ *
+ * Note: a save method isn't provided, simply use drupal_write_record().
  */
 
 /**
@@ -630,18 +632,6 @@ function casetracker_state_load($name = NULL, $realm = NULL, $reset = FALSE) {
 }
 
 /**
- * Load states for a particular realm. Wrapper around casetracker_case_state_load()
- *
- * @param $realm
- *   Name of the realm ('status', 'priority', or 'type').
- * @return
- *   array with the keys being the state ID and the values being their names.
- */
-function casetracker_realm_load($realm) {
-  return casetracker_state_load(null, $realm);
-}
-
-/**
  * Deletes a case state.
  *
  * @todo There is currently no attempt to do anything with cases which
@@ -656,6 +646,42 @@ function casetracker_state_delete($name = NULL) {
   if (!empty($csid)) {
     db_query('DELETE FROM {casetracker_case_states} WHERE name = %d', $name);
   }
+}
+
+/**
+ * Load states for a particular realm. Wrapper around casetracker_case_state_load()
+ *
+ * @param $realm
+ *   Name of the realm ('status', 'priority', or 'type').
+ * @return
+ *   array with the keys being the state ID and the values being their names.
+ */
+function casetracker_realm_load($realm) {
+  return casetracker_state_load(null, $realm);
+}
+
+/**
+ * Retrieve a list of realms, suitable for form api
+ *
+ * @param $reset
+ *   Reset the static cache.
+ *
+ * @return array of realms, machine_name => Name
+ */
+function casetracker_realm_list($reset = false) {
+  static $realms;
+  if (!isset($realms) || $reset) {
+    ctools_include('export');
+    $states = ctools_export_load_object('casetracker_states', 'all');
+    $realms = array();
+    foreach ($states as $i) {
+      if (!isset($realms[$i->realm])) {
+        $realms[$i->realm->name] = $i->realm->title;
+      }
+    }
+    $realms = array_merge($realms, variable_get('casetracker_realms', array('status' => t('Status'), 'type' => t('Type'), 'priority' => t('Priority'))));
+  }
+  return $realms;
 }
 
 /**

@@ -70,7 +70,7 @@ function casetracker_basic_default_casetracker_states() {
   $property->name = 'open';
   $property->title = t('Open');
   $property->realm = 'status';
-  $property->weight = 1;
+  $property->weight = 0;
   $properties[] = $property;
   
   return $properties;
