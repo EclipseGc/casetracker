@@ -45,8 +45,7 @@ function casetracker_basic_default_casetracker_templates() {
   $template->properties = array();
   $property = new stdClass();
   $property->module = 'casetracker';
-  $property->type = 'state';
-  $property->id = 'status';
+  $property->type = 'state-status';
   $property->options = array('open', 'closed');
   $property->default = 'open';
   $template->properties[] = $property;

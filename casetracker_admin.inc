@@ -2,46 +2,48 @@
 // $Id: casetracker_admin.inc,v 1.2.2.4 2009/06/12 20:04:45 jmiccolis Exp $
 
 /**
- * Configures the various Case Tracker options; system_settings_form().
+ * Assign case templates to node types.
  */
 function casetracker_settings() {
-  $node_types = node_get_types('names');
-
-  $project_types = $node_types; unset($project_types['casetracker_basic_case']);
-  $form['casetracker_project_node_types'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Project node types'),
-    '#options' => $project_types,
-    '#default_value' => variable_get('casetracker_project_node_types', array('casetracker_basic_project')),
-    '#description' => t('Select the node types that will be considered Case Tracker projects.'),
-  );
-
-  $case_types = $node_types; unset($case_types['casetracker_basic_project']);
-  $form['casetracker_case_node_types'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Case node types'),
-    '#options' => $case_types,
-    '#default_value' => variable_get('casetracker_case_node_types', array('casetracker_basic_case')),
-    '#description' => t('Select the node types that will be considered Case Tracker cases.'),
-  );
-
   ctools_include('export');
   $templates = ctools_export_load_object('casetracker_templates', 'all');
-  $options = array();
+  $node_types = node_get_types('names');
+  $settings = variable_get('casetracker_case_node_types', array());
+
+  $options = array('' => t('--Disabled--'));
   foreach ($templates as $v) {
-    $options[] = $v->name;
+    $options[$v->name] = $v->name;
   }
-  $default = variable_get('casetracker_default_template', '');
-  $default = isset($templates[$default]) ? $templates[$default] : null;
 
-  $form = array();
-  $form['casetracker_default_template'] = array(
-    '#type' => 'select',
-    '#title' => t('Default case template'),
-    '#options' => $options,
-    '#default_value' => $default,
+  $form['types'] = array('#tree' => true);
+  foreach ($node_types as $k => $v) {
+    $form['types'][$k] = array(
+      '#type' => 'select',
+      '#title' => $v,
+      '#options' => $options,
+      '#default_value' => $settings[$k],
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
   );
+  return $form;
 
+  // TODO move project options to the preset level.
+  //
+  // $project_types = $node_types; unset($project_types['casetracker_basic_case']);
+  // $form['casetracker_project_node_types'] = array(
+  //   '#type' => 'checkboxes',
+  //   '#title' => t('Project node types'),
+  //   '#options' => $project_types,
+  //   '#default_value' => variable_get('casetracker_project_node_types', array('casetracker_basic_project')),
+  //   '#description' => t('Select the node types that will be considered Case Tracker projects.'),
+  // );  
+
+  // TODO move all thie default and options control to the preset level.
+  //
   // $form['casetracker_general'] = array(
   //   '#type' => 'fieldset',
   //   '#title' => t('General settings'),
@@ -94,58 +96,13 @@ function casetracker_settings() {
   //   '#default_value' => variable_get('casetracker_view_assignee_options', 'casetracker_assignee_options'),
   //   '#description' => t('Select the view from which to fill the user assignment options on the add case page.'),
   // );
-  
-  $form['#submit'][] = 'casetracker_settings_submit';
-  return system_settings_form($form);
 }
 
 /**
  * Submit handler for casetracker_settings.
- *
- * Clear the views so project drop downs will be properly populated after
- * settings changes.
  */
-function casetracker_settings_submit($form, $form_state) {
-   views_invalidate_cache();
-}
-
-/**
- * Displays a form for adding or editing a case state.
- */
-function casetracker_template_edit($form_state, $template = NULL) {
-  $form = array();
-  $form['name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Template name'),
-    '#required' => TRUE,
-    '#default_value' => isset($template) ? $template->name : NULL,
-    '#description' => t('The name for this case template.'),
-  );
-  foreach ($template->properties as $property) {
-    $form[$property->id] = array();
-    $form[$property->id][] = array(
-      '#value' => $property->module .'-'.$property->type,
-    );
-    $form[$property->id]['default'] = array(
-      '#title' => t('Default value'),
-      '#type' => 'select',
-      '#options' => array(),
-    );
-    $form[$property->id]['options'] = array(
-      '#title' => t('Options'),
-      '#type' => 'select',
-      '#options' => array(),
-    );
-  }
-
-  $form['submit'] = array(
-    '#type' => 'submit', 
-    '#value' => t('Submit'),
-  );
-
-  $form['add'] = array();
-
-  return $form;
+function casetracker_settings_submit($form, &$form_state) {
+  variable_set('casetracker_case_node_types', $form_state['values']['types']);
 }
 
 /**
@@ -173,6 +130,68 @@ function casetracker_templates_page() {
     $rows[] = $row;
   }
   return theme('table', $headers, $rows);
+}
+
+/**
+ * Displays a form for adding or editing a case state.
+ */
+function casetracker_template_edit($form_state, $template = NULL) {
+  $properties = casetracker_properties();
+  $form = array();
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Template name'),
+    '#required' => TRUE,
+    '#default_value' => isset($template) ? $template->name : NULL,
+    '#description' => t('The name for this case template.'),
+  );
+  foreach ($template->properties as $p) {
+    $def = $properties[$p->module .'-'. $p->type];
+    $options = call_user_func_array($def->options_callback, $def->options_arguments);
+    $form[$p->id] = array(
+      '#tree' => true,
+      '#type' => 'fieldset',
+    );
+    $form[$p->id][] = array(
+      '#value' => $p->module .'-'.$p->type,
+    );
+    $form[$p->id]['default'] = array(
+      '#title' => t('Default value'),
+      '#type' => 'select',
+      '#options' => $options,
+    );
+    $form[$p->id]['options'] = array(
+      '#title' => t('Options'),
+      '#type' => 'select',
+      '#multiple' => true,
+      '#options' => $options,
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Submit'),
+  );
+
+  $form['add'] = array(
+    '#tree' => true,
+    '#type' => 'fieldset',
+  );
+  $options = array();
+  foreach ($properties as $k => $v) {
+    $options[$k] = $v->title;
+  }
+  $form['add']['property'] = array(
+    '#options' => $options,
+    '#type' => 'select',
+    '#title' => 'Add property',
+  );
+  $form['add']['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Add'),
+  );
+  
+  return $form;
 }
 
 /**
@@ -258,7 +277,7 @@ function theme_casetracker_states_form($form) {
   $header = array();
   foreach (element_children($form['states']) as $realm) {
     if (!empty($realm)) {
-      // TODO
+      // TODO fancy js.
       // drupal_add_tabledrag('casetracker_states_admin', 'order', 'sibling', "state-weight", "state-weight-$realm");
       // drupal_add_tabledrag('casetracker_states_admin', 'match', 'sibling', "realm-select", "realm-select-$realm", null, false);
     }
@@ -284,6 +303,9 @@ function theme_casetracker_states_form($form) {
   return $o;
 }
 
+/**
+ * TODO delete unused realms.
+ */
 function casetracker_states_submit($form, &$form_state) {
   ctools_include('export');
   $states = ctools_export_load_object('casetracker_states', 'all');

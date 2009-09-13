@@ -191,6 +191,46 @@ function casetracker_menu() {
 }
 
 /**
+ * Retrieve all case meta-data property types.
+ */
+function casetracker_properties() {
+  $properties = module_invoke_all('casetracker_properties');
+  drupal_alter('casetracker_properties', $properties);
+  return $properties;
+}
+
+/**
+ * Implementation of hook_casetracker_properties()
+ */
+function casetracker_casetracker_properties() {
+  foreach (casetracker_realm_list() as $k => $v) {
+    $item = new stdClass();
+    $item->module = 'casetracker';
+    $item->type = 'state-'. $k;
+    $item->title = $v;
+    $item->options_callback = 'casetracker_realm_load';
+    $item->options_arguments = array($k);
+    // $item->default_callback = '';
+    $properties[$item->module .'-'. $item->type] = $item;
+  }
+
+  $item = new stdClass();
+  $item->type = 'node';
+  $item->module = 'casetracker';
+  // $item->options_callback = '';
+  $item->title = t('Node');
+  $properties[$item->module .'-'. $item->type] = $item;
+
+  $item = new stdClass();
+  $item->type = 'user';
+  $item->module = 'casetracker';
+  // $item->options_callback = ''; 
+  $item->title = t('User');
+  $properties[$item->module .'-'. $item->type] = $item;
+  return $properties;
+}
+
+/**
  * Implementation of hook_nodeapi().
  */
 function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
