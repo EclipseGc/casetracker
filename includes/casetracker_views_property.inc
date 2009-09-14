@@ -11,11 +11,18 @@ class casetracker_views_property {
       '#title' => t('Name'),
       '#default_value' => $property->name,
     );
-    $form['default'] = array(
+    $form['view'] = array(
+      '#type' => 'select',
+      '#title' => t('View'),
+      '#options' => $this->views_options($base_table),
+      '#default_value' => $property->view,
+    );
+    // TODO default value via AJAX
+    $form['default_value'] = array(
       '#type' => 'select',
       '#title' => t('Default value'),
-      '#options' => $this->views_options($base_table),
-      '#default_value' => $property->value,
+      '#options' => $this->options($property->view),
+      '#default_value' => $property->default_value
     );
   }
   
