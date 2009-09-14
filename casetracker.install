@@ -126,7 +126,7 @@ function casetracker_schema() {
     'fields' => array(
       'tid' => array('type' => 'serial','unsigned' => TRUE, 'not null' => TRUE),
       'name' => array('type' => 'varchar', 'length' => 32),
-      'properties' => array('type' => 'text', 'size' => 'big'),
+      'properties' => array('type' => 'text', 'size' => 'big', 'serialize' => TRUE),
     ),
     'primary key' => array('tid'),
     'unique keys' => array(

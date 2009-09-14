@@ -202,6 +202,7 @@ function casetracker_menu() {
 function casetracker_casetracker_properties() {
   $info = array();
   $info['casetracker_property_state'] = array(
+    'title' => t('State'),
     'handler' => 'casetracker_property_state',
     'file' => 'includes/casetracker_property_state.inc'
   );
@@ -210,6 +211,7 @@ function casetracker_casetracker_properties() {
     'file' => 'includes/casetracker_views_property.inc'
   );
   $info['casetracker_property_node'] = array(
+    'title' => t('Node'),
     'handler' => array(
       'parent' => 'casetracker_views_property',
       'class' => 'casetracker_property_node',
@@ -218,6 +220,7 @@ function casetracker_casetracker_properties() {
     ),
   );
   $info['casetracker_property_user'] = array(
+    'title' => t('User'),
     'handler' => array(
       'parent' => 'casetracker_views_property',
       'class' => 'casetracker_property_user',

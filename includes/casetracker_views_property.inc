@@ -44,7 +44,7 @@ class casetracker_views_property {
     return $type_cache['all'];
   }
   
-    /**
+  /**
    * API function that returns valid user options.
    */
   function options($view_name) {

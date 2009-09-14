@@ -30,35 +30,6 @@ function casetracker_settings() {
     '#value' => t('Submit'),
   );
   return $form;
-
-  // TODO move project options to the preset level.
-  //
-  // $project_types = $node_types; unset($project_types['casetracker_basic_case']);
-  // $form['casetracker_project_node_types'] = array(
-  //   '#type' => 'checkboxes',
-  //   '#title' => t('Project node types'),
-  //   '#options' => $project_types,
-  //   '#default_value' => variable_get('casetracker_project_node_types', array('casetracker_basic_project')),
-  //   '#description' => t('Select the node types that will be considered Case Tracker projects.'),
-  // );  
-
-
-
-  // $form['casetracker_general']['casetracker_view_project_options'] = array(
-  //   '#type' => 'select',
-  //   '#title' => t('Project options view'),
-  //   '#options' => $node_views,
-  //   '#default_value' => variable_get('casetracker_view_project_options', 'casetracker_project_options'),
-  //   '#description' => t('Select the view from which to fill the project selector on the add case page.'),
-  // );
-  // 
-  // $form['casetracker_general']['casetracker_view_assignee_options'] = array(
-  //   '#type' => 'select',
-  //   '#title' => t('Assignee options view'),
-  //   '#options' => $user_views,
-  //   '#default_value' => variable_get('casetracker_view_assignee_options', 'casetracker_assignee_options'),
-  //   '#description' => t('Select the view from which to fill the user assignment options on the add case page.'),
-  // );
 }
 
 /**
@@ -109,16 +80,17 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#default_value' => isset($template) ? $template->name : NULL,
     '#description' => t('The name for this case template.'),
   );
+  $form['properties'] = array('#tree' => true);
   foreach ($template->properties as $p) {
-    $element = array();
+    $element = array('#type' => 'fieldset');
+    $element['type'] = array(
+      '#type' => 'value',
+      '#value' => $p->type,
+    );
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
     $type->setting_form($element, $p);
-    $form[] = array(
-      '#tree' => true,
-      '#type' => 'fieldset',
-      $element,
-    );
+    $form['properties'][] = $element;
   }
 
   $form['submit'] = array(
@@ -130,21 +102,52 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#tree' => true,
     '#type' => 'fieldset',
   );
-  // $options = array();
-  // foreach ($properties as $k => $v) {
-  //   $options[$k] = $v->title;
-  // }
-  // $form['add']['property'] = array(
-  //   '#options' => $options,
-  //   '#type' => 'select',
-  //   '#title' => 'Add property',
-  // );
+  $plugins = ctools_get_plugins('casetracker', 'properties');
+  $options = array();
+  foreach ($plugins as $k => $v) {
+    if (isset($v['title'])) {
+      $options[$k] = $v['title'];
+    }
+  }
+  $form['add']['property'] = array(
+    '#options' => $options,
+    '#type' => 'select',
+    '#title' => 'Add property',
+  );
   $form['add']['submit'] = array(
     '#type' => 'submit', 
     '#value' => t('Add'),
+    '#submit' => array('casetracker_property_add_submit'),
   );
   
   return $form;
+}
+
+/**
+ * 
+ */
+function casetracker_template_edit_submit($form, &$form_state) {
+  $record = array('name' => $form_state['values']['name']);
+  $record['properties'] = array();
+  foreach ($form_state['values']['properties'] as $item) {
+    $record['properties'][] = (object)$item;
+  }
+
+  ctools_include('export');
+  $templates = ctools_export_load_object('casetracker_templates', 'names', array($record['name']));
+  if (
+    isset($templates[$record['name']]) && 
+    ($templates[$record['name']]->export_type & EXPORT_IN_DATABASE)
+  ) {
+    drupal_write_record('casetracker_templates', $record, array('name'));
+  }
+  else {
+    drupal_write_record('casetracker_templates', $record);
+  }
+}
+
+function casetracker_property_add_submit($form, &$form_state) {
+  
 }
 
 /**
