@@ -1,15 +1,10 @@
 <?php
 
 /**
-* 
+* Case meta-data handler for the state/realm system.
 */
 class casetracker_property_state {
   function setting_form(&$form, $property) {
-    $form['name'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Name'),
-      '#default_value' => $property->name,
-    );
     $form['realm'] = array(
       '#type' => 'select',
       '#title' => t('Realm'),
@@ -25,12 +20,12 @@ class casetracker_property_state {
     );
   }
 
-  function option_form(&$form, $property) {
-    $form['default'] = array(
+  function option_form(&$form, $property, $node) {
+    $form[$property->id] = array(
       '#type' => 'select',
       '#title' => $property->name,
       '#options' => casetracker_realm_load($property->realm),
-      '#default_value' => $property->state,
+      '#default_value' => isset($node->casetracker->{$property->id}) ? null : $node->casetracker->{$property->id},
     );
   }
 }

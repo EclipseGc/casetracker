@@ -236,74 +236,66 @@ function casetracker_casetracker_properties() {
  */
 function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   // CASES
-  if (casetracker_is_case($node->type)) {
+  $types = variable_get('casetracker_case_node_types', array());
+  if ($template_name = $types[$node->type]) {
     switch ($op) {
 
-      case 'delete':
-        // delete case and its comments.
-        $comment_results = db_query("SELECT cid FROM {comments} WHERE nid = %d", $node->nid);
-        while ($comment_result = db_fetch_object($comment_results)) {
-          db_query("DELETE FROM {casetracker_comment_status} WHERE cid = %d", $comment_result->cid);
-        }
-        db_query('DELETE FROM {casetracker_case} WHERE nid = %d', $node->nid);
-        break;
-
       case 'insert':
-        // $node->casetracker is an Array and we wanna it to be an object. I
-        // guess it's a nasty workaround.
-        $node->casetracker = (object) $node->casetracker;
-
-        // cases: generate a case ID and send it along.
-        $record = $node->casetracker;
-        $record->assign_to = casetracker_get_uid($record->assign_to);
-        $record->nid = $node->nid;
-        $record->vid = $node->vid;
-
-        drupal_write_record('casetracker_case', $record);
+      case 'update':
+        foreach ($node->casetracker as $k => $v) {
+          $record = array(
+            'nid' => $node->nid,
+            'type' => 'node',
+            'id' => $node->vid,
+            'title' => $node->title,
+            'meta_type' => $k,
+            'meta_id' => $v,
+          );
+          if ($node->revision || $node->is_new) {
+            drupal_write_record('casetracker_case_status', $record);
+          }
+          else {
+            drupal_write_record('casetracker_case_status', $record, array('type', 'id'));
+          }
+        }
         break;
 
       case 'load':
-        $casetracker = db_fetch_object(db_query('SELECT pid, case_priority_id, case_type_id, assign_to, case_status_id FROM {casetracker_case} WHERE nid = %d AND vid = %d', $node->nid, $node->vid));
-        if ($casetracker) {
-          return array('casetracker' => $casetracker);
+        $result = db_query('SELECT * FROM {casetracker_case} WHERE nid = %d AND type = "node" AND id = %d', $node->nid, $node->vid);
+        $info = array();
+        while($row = db_fetch_array($result)) {
+          $info = $row;
         }
-        break;
-
-      case 'update':
-        $record = (object) $node->casetracker;
-        $record->assign_to = casetracker_get_uid($record->assign_to);
-        $record->nid = $node->nid;
-        $record->vid = $node->vid;
-
-        $primary = $node->revision ? array('nid') : array('nid', 'vid');
-        drupal_write_record('casetracker_case', $record, $primary);
-        break;
+        return array('casetracker' => $info);
 
       case 'view':
-        // On preview the case will be an array, we want an object.
-        if (isset($node->build_mode) && $node->build_mode == NODE_BUILD_PREVIEW) {
-          $node->casetracker = (object)$node->casetracker;
-        }
-
-        // used in the breadcrumb and our theme function, mostly for nid and project number display.
-        $project = node_load($node->casetracker->pid);
-
-        if ($page) {
-          $trail = array(
-            l(t('Home'), NULL),
-            l(t('Case Tracker'), 'casetracker/projects'),
-            l($project->title, "node/{$node->casetracker->pid}"),
-            l(t('All cases'), "casetracker/cases/{$node->casetracker->pid}/all"),
-          );
-          drupal_set_breadcrumb($trail);
-        }
-
-        $node->content['casetracker_case_summary'] = array(
-          '#value' => theme('casetracker_case_summary', $node, $project),
-          '#weight' => -10
-        );
+        // // used in the breadcrumb and our theme function, mostly for nid and project number display.
+        // $project = node_load($node->casetracker->pid);
+        // 
+        // if ($page) {
+        //   $trail = array(
+        //     l(t('Home'), NULL),
+        //     l(t('Case Tracker'), 'casetracker/projects'),
+        //     l($project->title, "node/{$node->casetracker->pid}"),
+        //     l(t('All cases'), "casetracker/cases/{$node->casetracker->pid}/all"),
+        //   );
+        //   drupal_set_breadcrumb($trail);
+        // }
+        // 
+        // $node->content['casetracker_case_summary'] = array(
+        //   '#value' => theme('casetracker_case_summary', $node, $project),
+        //   '#weight' => -10
+        // );
         break;
 
+      case 'delete':
+        // // delete case and its comments.
+        // $comment_results = db_query("SELECT cid FROM {comments} WHERE nid = %d", $node->nid);
+        // while ($comment_result = db_fetch_object($comment_results)) {
+        //   db_query("DELETE FROM {casetracker_comment_status} WHERE cid = %d", $comment_result->cid);
+        // }
+        // db_query('DELETE FROM {casetracker_case} WHERE nid = %d', $node->nid);
+        break;
     }
   }
   // PROJECTS
@@ -460,7 +452,7 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
     foreach ($templates[$template_name]->properties as $p) {
       $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
       $type = new $class();
-      $form['casetracker'][] = $type->option_form($form['casetracker'], $p);
+      $type->option_form($form['casetracker'], $p, $node);
     }
   }
 }
@@ -803,7 +795,7 @@ function theme_casetracker_case_form_common($form) {
  * @param $project
  *   The node object of the project this case belongs to.
  */
-function theme_casetracker_case_summary($case, $project) {
+function theme_casetracker_case_summary($case, $project) {return;
   $last_comment = db_result(db_query('SELECT last_comment_timestamp FROM {node_comment_statistics} WHERE nid = %d', $case->nid));
   $rows = array();
 
@@ -887,38 +879,21 @@ function theme_casetracker_project_summary($project) {
  * API FUNCTIONS ======================================================
  */
 
-/**
- * API function that returns valid project options.
- */
-function casetracker_project_options() {
-  $projects = array();
-  // Fetch the views list of projects, which is space-aware.
-  if ($view = views_get_view(variable_get('casetracker_view_project_options', 'casetracker_project_options'))) {
-    $view->set_display();
-    $view->set_items_per_page(0);
-    $view->execute();
-    foreach ($view->result as $row) {
-      $projects[$row->nid] = $row->node_title;
-    }
-  }
-  return $projects;
-}
-
-/**
- * API function for checking whether a node type is a casetracker case.
- */
-function casetracker_is_case($node) {
-  if (is_object($node) && !empty($node->type)) {
-    $type = $node->type;
-  }
-  else if (is_string($node)) {
-    $type = $node;
-  }
-  if ($type) {
-    return in_array($type, variable_get('casetracker_case_node_types', array('casetracker_basic_case')), TRUE);
-  }
-  return FALSE;
-}
+// /**
+//  * API function for checking whether a node type is a casetracker case.
+//  */
+// function casetracker_is_case($node) {
+//   if (is_object($node) && !empty($node->type)) {
+//     $type = $node->type;
+//   }
+//   else if (is_string($node)) {
+//     $type = $node;
+//   }
+//   if ($type) {
+//     return in_array($type, variable_get('casetracker_case_node_types', array('casetracker_basic_case')), TRUE);
+//   }
+//   return FALSE;
+// }
 
 /**
  * API function for checking whether a node type is a casetracker project.

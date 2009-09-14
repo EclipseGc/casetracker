@@ -48,6 +48,7 @@ function casetracker_basic_default_casetracker_templates() {
   $property->type = 'casetracker_property_state';
   $property->realm = 'status';
   $property->name = t('Status');
+  $property->id = 'status';
   // $property->options = array('open', 'closed');
   $property->default = 'open';
   $template->properties[] = $property;
@@ -56,6 +57,7 @@ function casetracker_basic_default_casetracker_templates() {
   $property->type = 'casetracker_property_user';
   $property->view = '';
   $property->name = t('Assigned');
+  $property->id = 'assigned';
   // $property->options = array('open', 'closed');
   // $property->default = 'open';
   $template->properties[] = $property;

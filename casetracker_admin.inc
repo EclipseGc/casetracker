@@ -91,6 +91,16 @@ function casetracker_template_edit($form_state, $template = NULL) {
       '#type' => 'checkbox',
       '#title' => t('Remove'),
     );
+   $element['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Name'),
+      '#default_value' => $p->name,
+    );
+    $element['id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Id'),
+      '#default_value' => $p->id,
+    );
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
     $type->setting_form($element, $p);

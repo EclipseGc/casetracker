@@ -1,16 +1,11 @@
 <?php
 
 /**
-* 
+* Base handler for views based properties.
 */
 class casetracker_views_property {
   
   function setting_form(&$form, $property, $base_table = null) {
-    $form['name'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Name'),
-      '#default_value' => $property->name,
-    );
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
@@ -34,8 +29,8 @@ class casetracker_views_property {
     if (!isset($type_cache) || $reset) {
       $all_views = views_get_all_views();
       foreach($all_views as $view) {
-        $type_cache[$view->base_table][] = $view->name;
-        $type_cache['all'][] = $view->name;
+        $type_cache[$view->base_table][$view->name] = $view->name;
+        $type_cache['all'][$view->name] = $view->name;
       }
     }
     if ($base_table) {
@@ -54,8 +49,16 @@ class casetracker_views_property {
       $view->set_display();
       $view->set_items_per_page(0);
       $view->execute();
+
+      foreach($view->field as $v) {
+        if (!$v->options['exclude']) {
+          $field = $v;
+          break;
+        }
+      }
+
       foreach ($view->result as $row) {
-        $options[$row->uid] = $row->users_name;
+        $options[$row->{$view->base_field}] = $row->{$field->field_alias};
       }
     }
     return $options;
@@ -64,11 +67,12 @@ class casetracker_views_property {
   /**
    * 
    */
-  function option_form(&$form, $property) {
-    $form[] = array(
+  function option_form(&$form, $property, $node) {
+    $form[$property->id] = array(
       '#type' => 'select',
       '#title' => $property->name,
-      '#options' => array(),
+      '#options' => $this->options($property->view),
+      '#default_value' => isset($node->casetracker->{$property->id}) ? null : $node->casetracker->{$property->id},
     );
   }
 }
