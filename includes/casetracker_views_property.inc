@@ -1,0 +1,56 @@
+<?php
+
+/**
+* 
+*/
+class casetracker_views_property {
+  
+  function setting_form(&$form, $property, $base_table = null) {
+    $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Name'),
+      '#default_value' => $property->name,
+    );
+    $form['default'] = array(
+      '#type' => 'select',
+      '#title' => t('Default value'),
+      '#options' => $this->views_options($base_table),
+      '#default_value' => $property->value,
+    );
+  }
+  
+  /**
+   * Retreive a list of views that could be used to generate options.
+   */
+  function views_options($base_table, $reset = true) {
+    static $type_cache;
+    if (!isset($type_cache) || $reset) {
+      $all_views = views_get_all_views();
+      foreach($all_views as $view) {
+        $type_cache[$view->base_table][] = $view->name;
+        $type_cache['all'][] = $view->name;
+      }
+    }
+    if ($base_table) {
+      return $type_cache[$base_table];
+    }
+    return $type_cache['all'];
+  }
+  
+    /**
+   * API function that returns valid user options.
+   */
+  function options($view_name) {
+    $users = array();
+    $options = array();
+    if ($view = views_get_view($view_name)) {
+      $view->set_display();
+      $view->set_items_per_page(0);
+      $view->execute();
+      foreach ($view->result as $row) {
+        $options[$row->uid] = $row->users_name;
+      }
+    }
+    return $options;
+  }
+}

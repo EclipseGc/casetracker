@@ -42,45 +42,8 @@ function casetracker_settings() {
   //   '#description' => t('Select the node types that will be considered Case Tracker projects.'),
   // );  
 
-  // TODO move all thie default and options control to the preset level.
-  //
-  // $form['casetracker_general'] = array(
-  //   '#type' => 'fieldset',
-  //   '#title' => t('General settings'),
-  //   '#collapsible' => TRUE,
-  //   '#collapsed' => FALSE,
-  // );
-  // $form['casetracker_general']['casetracker_default_assign_to'] = array(
-  //   '#type' => 'textfield',
-  //   '#title' => t('Default assigned user'),
-  //   '#autocomplete_path' => 'casetracker_autocomplete',
-  //   '#required' => TRUE,
-  //   '#default_value' => variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous'))),
-  //   '#description' => t('User to be assigned the case if one is not explicitly defined.'),
-  // );
-  // 
-  // foreach (array('priority', 'status', 'type') as $realm) {
-  //   $options = casetracker_realm_load($realm);
-  //   $temp_keys = array_keys($options);
-  //   $form['casetracker_general']['casetracker_default_case_'. $realm] = array(
-  //     '#type' => 'select',
-  //     '#options' => $options,
-  //     '#title' => t('Default case %realm', array('%realm' => $realm)),
-  //     '#default_value' => variable_get('casetracker_default_case_'. $realm, array_shift($temp_keys)),
-  //     '#description' => t('%realm to be assigned the case if one is not explicitly defined.', array('%realm' => ucfirst($realm))),
-  //   );
-  // };
-  // 
-  // $all_views = views_get_all_views();
-  // $node_views = array();
-  // $user_views = array();
-  // foreach($all_views AS $view) {
-  //   if($view->base_table == 'node') {
-  //     $node_views[$view->name] = $view->name;
-  //   } else if($view->base_table = 'users') {
-  //     $user_views[$view->name] = $view->name;
-  //   }
-  // }
+
+
   // $form['casetracker_general']['casetracker_view_project_options'] = array(
   //   '#type' => 'select',
   //   '#title' => t('Project options view'),
@@ -136,7 +99,8 @@ function casetracker_templates_page() {
  * Displays a form for adding or editing a case state.
  */
 function casetracker_template_edit($form_state, $template = NULL) {
-  $properties = casetracker_properties();
+  ctools_include('plugins');
+
   $form = array();
   $form['name'] = array(
     '#type' => 'textfield',
@@ -146,25 +110,14 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#description' => t('The name for this case template.'),
   );
   foreach ($template->properties as $p) {
-    $def = $properties[$p->module .'-'. $p->type];
-    $options = call_user_func_array($def->options_callback, $def->options_arguments);
-    $form[$p->id] = array(
+    $element = array();
+    $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
+    $type = new $class();
+    $type->setting_form($element, $p);
+    $form[] = array(
       '#tree' => true,
       '#type' => 'fieldset',
-    );
-    $form[$p->id][] = array(
-      '#value' => $p->module .'-'.$p->type,
-    );
-    $form[$p->id]['default'] = array(
-      '#title' => t('Default value'),
-      '#type' => 'select',
-      '#options' => $options,
-    );
-    $form[$p->id]['options'] = array(
-      '#title' => t('Options'),
-      '#type' => 'select',
-      '#multiple' => true,
-      '#options' => $options,
+      $element,
     );
   }
 
@@ -177,15 +130,15 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#tree' => true,
     '#type' => 'fieldset',
   );
-  $options = array();
-  foreach ($properties as $k => $v) {
-    $options[$k] = $v->title;
-  }
-  $form['add']['property'] = array(
-    '#options' => $options,
-    '#type' => 'select',
-    '#title' => 'Add property',
-  );
+  // $options = array();
+  // foreach ($properties as $k => $v) {
+  //   $options[$k] = $v->title;
+  // }
+  // $form['add']['property'] = array(
+  //   '#options' => $options,
+  //   '#type' => 'select',
+  //   '#title' => 'Add property',
+  // );
   $form['add']['submit'] = array(
     '#type' => 'submit', 
     '#value' => t('Add'),

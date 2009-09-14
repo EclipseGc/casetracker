@@ -23,6 +23,12 @@ function casetracker_views_api() {
   return array('api' => 2);
 }
 
+function casetracker_ctools_plugin_api($module, $api) {
+  if ($module == 'casetracker' && $api == 'properties') {
+    return array('version' => 1);
+  }
+}
+
 /**
  * Implementation of hook_help().
  */
@@ -191,43 +197,35 @@ function casetracker_menu() {
 }
 
 /**
- * Retrieve all case meta-data property types.
- */
-function casetracker_properties() {
-  $properties = module_invoke_all('casetracker_properties');
-  drupal_alter('casetracker_properties', $properties);
-  return $properties;
-}
-
-/**
  * Implementation of hook_casetracker_properties()
  */
 function casetracker_casetracker_properties() {
-  foreach (casetracker_realm_list() as $k => $v) {
-    $item = new stdClass();
-    $item->module = 'casetracker';
-    $item->type = 'state-'. $k;
-    $item->title = $v;
-    $item->options_callback = 'casetracker_realm_load';
-    $item->options_arguments = array($k);
-    // $item->default_callback = '';
-    $properties[$item->module .'-'. $item->type] = $item;
-  }
-
-  $item = new stdClass();
-  $item->type = 'node';
-  $item->module = 'casetracker';
-  // $item->options_callback = '';
-  $item->title = t('Node');
-  $properties[$item->module .'-'. $item->type] = $item;
-
-  $item = new stdClass();
-  $item->type = 'user';
-  $item->module = 'casetracker';
-  // $item->options_callback = ''; 
-  $item->title = t('User');
-  $properties[$item->module .'-'. $item->type] = $item;
-  return $properties;
+  $info = array();
+  $info['casetracker_property_state'] = array(
+    'handler' => 'casetracker_property_state',
+    'file' => 'includes/casetracker_property_state.inc'
+  );
+  $info['casetracker_views_property'] = array(
+    'handler' => 'casetracker_views_property',
+    'file' => 'includes/casetracker_views_property.inc'
+  );
+  $info['casetracker_property_node'] = array(
+    'handler' => array(
+      'parent' => 'casetracker_views_property',
+      'class' => 'casetracker_property_node',
+      'file' => 'casetracker_property_node.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),
+  );
+  $info['casetracker_property_user'] = array(
+    'handler' => array(
+      'parent' => 'casetracker_views_property',
+      'class' => 'casetracker_property_user',
+      'file' => 'casetracker_property_user.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),    
+  );
+  return $info;
 }
 
 /**
@@ -996,34 +994,6 @@ function casetracker_project_options() {
     }
   }
   return $projects;
-}
-
-/**
- * API function that returns valid user options.
- */
-function casetracker_user_options() {
-  $users = array();
-  $options = array();
-  if ($view = views_get_view(variable_get('casetracker_view_assignee_options', 'casetracker_assignee_options'))) {
-    $view->set_display();
-    $view->set_items_per_page(0);
-    $view->execute();
-    foreach ($view->result as $row) {
-      $options[$row->uid] = $row->users_name;
-    }
-  }
-  // fill in anonymous value because view is not rendered and the redundant option in views is irrelevant
-  // @TODO render the view before display so this isn't needed.
-  $anon_user = variable_get('anonymous', t('Anonymous'));
-  if (isset($options[0])) {
-    $options[0] = variable_get('casetracker_default_assign_to', $anon_user);
-  }
-  // if anonymous user is the default assignee, we graft him/her onto the view results here as most views
-  // that do any substantive filtering will exclude the anonymous user.
-  else if (variable_get('casetracker_default_assign_to', $anon_user) == $anon_user) {
-    array_splice($options, 0, 0, array($anon_user));
-  }
-  return $options;
 }
 
 /**
