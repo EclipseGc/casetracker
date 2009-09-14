@@ -60,4 +60,15 @@ class casetracker_views_property {
     }
     return $options;
   }
+  
+  /**
+   * 
+   */
+  function option_form(&$form, $property) {
+    $form[] = array(
+      '#type' => 'select',
+      '#title' => $property->name,
+      '#options' => array(),
+    );
+  }
 }

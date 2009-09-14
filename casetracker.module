@@ -405,23 +405,7 @@ function casetracker_comment(&$comment, $op) {
  */
 function casetracker_form_alter(&$form, &$form_state, $form_id) {
   if (!empty($form['#node'])) {
-    $node = $form['#node'];
-
-    // Add case options to our basic case type.
-    if (casetracker_is_case($node->type)) {
-      $count = count(casetracker_project_options());
-      if ($count == 0) {
-        drupal_set_message(t('You must create a project before adding cases.'), 'error');
-        return;
-      }
-      else {
-        $default_project = null;
-        if (!isset($form['#node']->nid) && is_numeric(arg(3))) {
-          $default_project = arg(3);
-        }
-        casetracker_case_form_common($form, $default_project);
-      }
-    }
+    casetracker_case_form_common($form);
   }
 }
 
@@ -430,15 +414,11 @@ function casetracker_form_alter(&$form, &$form_state, $form_id) {
  */
 function casetracker_form_comment_form_alter(&$form, &$form_state) {
   $node = isset($form['nid']['#value']) ? node_load($form['nid']['#value']) : NULL;
-  if (casetracker_is_case($node->type)) {
-    $form['#node'] = $node;
+  $form['#node'] = $node;
+  casetracker_case_form_common($form);
 
-    // add case options to the comment form.
-    casetracker_case_form_common($form);
-
-    // necessary for our casetracker_comment() callback.
-    $form['revision_id'] = array('#type' => 'hidden', '#value' => $node->vid);
-  }
+  // // necessary for our casetracker_comment() callback.
+  // $form['revision_id'] = array('#type' => 'hidden', '#value' => $node->vid);
 }
 
 /**
@@ -454,110 +434,35 @@ function casetracker_form_comment_form_alter(&$form, &$form_state) {
  *   A modified Forms API $form.
  */
 function casetracker_case_form_common(&$form, $default_project = NULL) {
-  global $user;
-
   $node = $form['#node'];
+  $types = variable_get('casetracker_case_node_types', array());
 
-  // On preview the case will be an array, we want an object.
-  if (isset($node->build_mode) && $node->build_mode == NODE_BUILD_PREVIEW) {
-    $node->casetracker = (object)$node->casetracker;
-  }
+  if ($template_name = $types[$node->type]) {
+    ctools_include('export'); 
+    ctools_include('plugins');
+    $templates = ctools_export_load_object('casetracker_templates', 'names', array($template_name));
 
-  // project to set as the default is based on how the user got here.
- if (empty($default_project) && !empty($node->casetracker->pid)) {
-    $default_project = $node->casetracker->pid;
-  }
+    // On preview the case will be an array, we want an object.
+    if (isset($node->build_mode) && $node->build_mode == NODE_BUILD_PREVIEW) {
+      $node->casetracker = (object)$node->casetracker;
+    }
 
-  $project_options = casetracker_project_options();
-
-  $form['casetracker'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Case information'),
-    '#weight' => -10,
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-    '#tree' => TRUE,
-    '#theme' => 'casetracker_case_form_common',
-  );
-
-  // if there's no project ID from the URL, or more than one project,
-  // we'll create a select menu for the user; otherwise, we'll save
-  // the passed (or only) project ID into a hidden field.
-  if (count($project_options) > 1) {
-    $form['casetracker']['pid'] = array(
-      '#title' => t('Project'),
-      '#type' => 'select',
-      '#default_value' => $default_project,
-      '#options' => $project_options,
+    $form['casetracker'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Case information'),
+      '#weight' => -10,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      '#theme' => 'casetracker_case_form_common',
     );
+    
+    foreach ($templates[$template_name]->properties as $p) {
+      $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
+      $type = new $class();
+      $form['casetracker'][] = $type->option_form($form['casetracker'], $p);
+    }
   }
-  else {
-    $form['casetracker']['pid'] = array(
-      '#type' => 'value', // default value, or the only the project ID in the project_options array.
-      '#value' => !empty($default_project) ? $default_project : key($project_options),
-    );
-  }
-
-  // Retrieve the assign_to default value.
-  if (isset($node->casetracker->assign_to)) {
-    $default_assign_to = is_numeric($node->casetracker->assign_to) ? casetracker_get_name($node->casetracker->assign_to) : $node->casetracker->assign_to;
-  }
-  else {
-    $default_assign_to = variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous')));
-  }
-
-  $form['casetracker']['assign_to'] = array(
-    '#title' => t('Assign to'),
-    '#required' => TRUE,
-  );
-
-  // Use different widgets based on the potential assignees.
-  $options = drupal_map_assoc(casetracker_user_options());
-  if (count($options) < 25) {
-    $form['casetracker']['assign_to']['#type'] = 'radios';
-    $form['casetracker']['assign_to']['#options'] = $options;
-  }
-  else if (count($options) < 50) {
-    $form['casetracker']['assign_to']['#type'] = 'select';
-    $form['casetracker']['assign_to']['#options'] = $options;
-  }
-  else {
-    $form['casetracker']['assign_to']['#type'] = 'textfield';
-    $form['casetracker']['assign_to']['#autocomplete_path'] = 'casetracker_autocomplete';
-    $form['casetracker']['assign_to']['#size'] = 12;
-  }
-
-  // Set the default value if it is valid.
-  $form['casetracker']['assign_to']['#default_value'] = in_array($default_assign_to, $options, TRUE) ? $default_assign_to : NULL;
-
-  $case_status_options = casetracker_realm_load('status');
-  $default_status = !empty($node->casetracker->case_status_id) ? $node->casetracker->case_status_id : variable_get('casetracker_default_case_status', key($case_status_options));
-  $form['casetracker']['case_status_id'] = array(
-    '#type' => 'select',
-    '#title' => t('Status'),
-    '#options' => $case_status_options,
-    '#default_value' => $default_status,
-  );
-
-  $case_priority_options = casetracker_realm_load('priority');
-  $default_priority = !empty($node->casetracker->case_priority_id) ? $node->casetracker->case_priority_id : variable_get('casetracker_default_case_priority', key($case_priority_options));
-    $form['casetracker']['case_priority_id'] = array(
-    '#type' => 'select',
-    '#title' => t('Priority'),
-    '#options' => $case_priority_options,
-    '#default_value' => $default_priority,
-  );
-
-  $case_type_options = casetracker_realm_load('type');
-  $default_type = !empty($node->casetracker->case_type_id) ? $node->casetracker->case_type_id : variable_get('casetracker_default_case_type', key($case_type_options));
-  $form['casetracker']['case_type_id'] = array(
-    '#type' => 'select',
-    '#title' => t('Type'),
-    '#options' => $case_type_options,
-    '#default_value' => $default_type,
-  );
-
-  return $form;
 }
 
 /**

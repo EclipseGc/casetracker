@@ -135,6 +135,7 @@ function casetracker_template_edit_submit($form, &$form_state) {
   $record['properties'] = array();
   foreach ($form_state['values']['properties'] as $item) {
     if ($item['remove'] !== 1) {
+      unset($item['remove']);
       $record['properties'][] = (object)$item;
     }
   }

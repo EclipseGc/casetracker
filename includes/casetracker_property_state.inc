@@ -28,7 +28,7 @@ class casetracker_property_state {
   function option_form(&$form, $property) {
     $form['default'] = array(
       '#type' => 'select',
-      '#title' => t('Default value'),
+      '#title' => $property->name,
       '#options' => casetracker_realm_load($property->realm),
       '#default_value' => $property->state,
     );
