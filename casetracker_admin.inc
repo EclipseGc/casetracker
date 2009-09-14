@@ -67,7 +67,7 @@ function casetracker_templates_page() {
 }
 
 /**
- * Displays a form for adding or editing a case state.
+ * Displays a form for adding or editing a case template.
  */
 function casetracker_template_edit($form_state, $template = NULL) {
   ctools_include('plugins');
@@ -81,11 +81,15 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#description' => t('The name for this case template.'),
   );
   $form['properties'] = array('#tree' => true);
-  foreach ($template->properties as $p) {
+  foreach ($template->properties as $i => $p) {
     $element = array('#type' => 'fieldset');
     $element['type'] = array(
       '#type' => 'value',
       '#value' => $p->type,
+    );
+    $element["remove"] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Remove'),
     );
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
@@ -124,13 +128,15 @@ function casetracker_template_edit($form_state, $template = NULL) {
 }
 
 /**
- * 
+ * Submit handler for case template editing.
  */
 function casetracker_template_edit_submit($form, &$form_state) {
   $record = array('name' => $form_state['values']['name']);
   $record['properties'] = array();
   foreach ($form_state['values']['properties'] as $item) {
-    $record['properties'][] = (object)$item;
+    if ($item['remove'] !== 1) {
+      $record['properties'][] = (object)$item;
+    }
   }
 
   ctools_include('export');
@@ -146,8 +152,12 @@ function casetracker_template_edit_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Submit handler for adding a property to a case template.
+ */
 function casetracker_property_add_submit($form, &$form_state) {
-  
+  $form_state['values']['properties'][] = array('type' => $form_state['values']['add']['property']);
+  casetracker_template_edit_submit($form, $form_state);
 }
 
 /**
