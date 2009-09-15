@@ -261,31 +261,18 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         break;
 
       case 'load':
-        $result = db_query('SELECT * FROM {casetracker_case} WHERE nid = %d AND type = "node" AND id = %d', $node->nid, $node->vid);
+        $result = db_query('SELECT * FROM {casetracker_case_status} WHERE nid = %d AND type = "node" AND id = %d', $node->nid, $node->vid);
         $info = array();
         while($row = db_fetch_array($result)) {
-          $info = $row;
+          $info[$row['meta_type']] = $row;
         }
         return array('casetracker' => $info);
 
       case 'view':
-        // // used in the breadcrumb and our theme function, mostly for nid and project number display.
-        // $project = node_load($node->casetracker->pid);
-        // 
-        // if ($page) {
-        //   $trail = array(
-        //     l(t('Home'), NULL),
-        //     l(t('Case Tracker'), 'casetracker/projects'),
-        //     l($project->title, "node/{$node->casetracker->pid}"),
-        //     l(t('All cases'), "casetracker/cases/{$node->casetracker->pid}/all"),
-        //   );
-        //   drupal_set_breadcrumb($trail);
-        // }
-        // 
-        // $node->content['casetracker_case_summary'] = array(
-        //   '#value' => theme('casetracker_case_summary', $node, $project),
-        //   '#weight' => -10
-        // );
+        $node->content['casetracker_case_summary'] = array(
+          '#value' => theme('casetracker_case_summary', $template_name, $node),
+          '#weight' => -10
+        );
         break;
 
       case 'delete':
@@ -795,53 +782,17 @@ function theme_casetracker_case_form_common($form) {
  * @param $project
  *   The node object of the project this case belongs to.
  */
-function theme_casetracker_case_summary($case, $project) {return;
-  $last_comment = db_result(db_query('SELECT last_comment_timestamp FROM {node_comment_statistics} WHERE nid = %d', $case->nid));
+function theme_casetracker_case_summary($template_name, $node) {
   $rows = array();
-
-  // On node preview the form logic can't translate assign_to back to a uid for
-  // us so we need to be able handle it either way.
-  if (is_numeric($case->casetracker->assign_to)) {
-    $assign_to = user_load(array('uid' => $case->casetracker->assign_to));
+  ctools_include('export'); 
+  ctools_include('plugins');
+  $templates = ctools_export_load_object('casetracker_templates', 'names', array($template_name));
+  foreach ($templates[$template_name]->properties as $p) {
+    $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
+    $type = new $class();
+    $rows[] = array($type->display($p, $node));
   }
-  else {
-    $assign_to = user_load(array('name' => $case->casetracker->assign_to));
-  }
-
-  $rows[] = array(
-    t('Assigned to:'),
-    theme('username', $assign_to),
-  );
-  $rows[] = array(
-    t('Created:'),
-    theme('username', $case) ." ". t('at') ." ". format_date($case->created, 'medium'),
-  );
-  $rows[] = array(
-    t('Status:'),
-    "<strong>". casetracker_case_state_load($case->casetracker->case_status_id, 'status') ."</strong> (" .
-    casetracker_case_state_load($case->casetracker->case_type_id, 'type') .' / '.
-    t("Priority")  ." ".
-    casetracker_case_state_load($case->casetracker->case_priority_id, 'priority') .
-    ")",
-  );
-
-  // On node preview a case may not have a nid, so we use some placeholder text.
-  $case_id = isset($case->nid) ? $case->nid : t("NEW");
-  $rows[] = array(
-    t('Case ID:'),
-    l($project->title, 'node/'. $case->casetracker->pid) .': '. $project->nid .'-'. $case_id,
-  );
-  if ($last_comment != $case->created) {
-    $rows[] = array(
-      t('Last modified:'),
-      format_date($last_comment, 'medium')
-    );
-  }
-
-  $output  = '<div class="case">';
-  $output .= theme('table', NULL, $rows, array('class' => 'summary'));
-  $output .= '</div>';
-  return $output;
+  return theme('table', NULL, $rows, array('class' => 'summary'));
 }
 
 /**
@@ -879,21 +830,6 @@ function theme_casetracker_project_summary($project) {
  * API FUNCTIONS ======================================================
  */
 
-// /**
-//  * API function for checking whether a node type is a casetracker case.
-//  */
-// function casetracker_is_case($node) {
-//   if (is_object($node) && !empty($node->type)) {
-//     $type = $node->type;
-//   }
-//   else if (is_string($node)) {
-//     $type = $node;
-//   }
-//   if ($type) {
-//     return in_array($type, variable_get('casetracker_case_node_types', array('casetracker_basic_case')), TRUE);
-//   }
-//   return FALSE;
-// }
 
 /**
  * API function for checking whether a node type is a casetracker project.

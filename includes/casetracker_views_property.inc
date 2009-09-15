@@ -75,4 +75,11 @@ class casetracker_views_property {
       '#default_value' => isset($node->casetracker->{$property->id}) ? null : $node->casetracker->{$property->id},
     );
   }
+  
+  /**
+   * 
+   */
+  function display($property, $node) {
+    return '<span class="' . $property->id. '">' . $property->name . ': <strong>'. $node->casetracker{$property->id}['meta_id'] . '</strong></span>';
+  }
 }
