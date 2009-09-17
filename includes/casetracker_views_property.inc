@@ -79,7 +79,7 @@ class casetracker_views_property {
   /**
    * 
    */
-  function display($property, $node) {
-    return '<span class="' . $property->id. '">' . $property->name . ': <strong>'. $node->casetracker{$property->id}['meta_id'] . '</strong></span>';
+  function display($property, $info) {
+    return '<span class="' . $property->id. '">' . $property->name . ': <strong>'. $info[$property->id]['meta_id'] . '</strong></span>';
   }
 }

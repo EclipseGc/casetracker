@@ -29,12 +29,12 @@ class casetracker_property_user extends casetracker_views_property {
     return $options;
   }
   
-  function display($property, $node) {
+  function display($property, $info) {
     // TODO test preview...
     // On node preview the form logic can't translate assign_to back to a uid for
     // us so we need to be able handle it either way.
     // if (is_numeric($case->casetracker->assign_to)) {
-      $account = user_load(array('uid' => $node->casetracker{$property->id}['meta_id']));
+      $account = user_load(array('uid' => $info[$property->id]['meta_id']));
     // }
     // else {
     //   $account = user_load(array('name' => $case->casetracker->assign_to));

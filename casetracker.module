@@ -268,16 +268,12 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         break;
 
       case 'load':
-        $result = db_query('SELECT * FROM {casetracker_case_status} WHERE nid = %d AND type = "node" AND id = %d', $node->nid, $node->vid);
-        $info = array();
-        while($row = db_fetch_array($result)) {
-          $info[$row['meta_type']] = $row;
-        }
-        return array('casetracker' => $info);
+        return array('casetracker' => casetracker_get_update($node->nid, 'node', $node->vid));
 
       case 'view':
+        // todo handle preview.
         $node->content['casetracker_case_summary'] = array(
-          '#value' => theme('casetracker_case_summary', $template_name, $node),
+          '#value' => theme('casetracker_case_summary', $template_name, $node->casetracker),
           '#weight' => -10
         );
         break;
@@ -347,7 +343,7 @@ function casetracker_comment(&$comment, $op) {
         }
 
         // Then we write the state details.
-        foreach ($node->casetracker as $k => $v) {
+        foreach ($comment['casetracker'] as $k => $v) {
           $record['meta_type'] = $k;
           $record['meta_id'] = $v;
           if ($op == 'insert') {
@@ -364,24 +360,41 @@ function casetracker_comment(&$comment, $op) {
       //   db_query("DELETE FROM {casetracker_comment_status} WHERE cid = %d", $comment->cid);
       //   break;
       case 'view':
-        // If this is a preview we won't have a cid yet.
-        if (empty($comment->cid)) {
-          // $case_data['new'] = (object)$comment->casetracker;
-          // $case_data['new']->assign_to = casetracker_get_uid($case_data['new']->assign_to);
-          // $case = node_load($comment->nid);
-          // $case_data['old'] = drupal_clone($case->casetracker);
+        // Is this a preview?
+        if (isset($comment->casetracker)) {
+          // Fake the info array for theme_casetracker_case_summary()
+          $info = array();
+          foreach ($comment->casetracker as $k => $v) {
+            $info[$k] = array('meta_id' => $v);
+          }
         }
         else {
-          // $results = db_query("SELECT * FROM {casetracker_comment_status} WHERE cid = %d", $comment->cid);
-          // while ($result = db_fetch_object($results)) {
-          //   $state = $result->state ? 'new' : 'old';
-          //   $case_data[$state] = $result;
-          // }
+          $info = casetracker_get_update($comment->nid, 'comment', $comment->cid);
         }
-        $comment->comment = theme('casetracker_comment_changes', $case_data['old'], $case_data['new']) . $comment->comment;        
+        $comment->comment = theme('casetracker_case_summary', $template_name, $info) . $comment->comment;        
         break;
     }
   }
+}
+
+/**
+ * Retrieve the effects of a change.
+ *
+ * @param $nid
+ *   The case nid.
+ * @param $type
+ *   The type of the case update.
+ * @param $id
+ *   The numeric id of the case update.
+ * @return an array of the state changes in the update.
+ */
+function casetracker_get_update($nid, $type, $id) {
+  $result = db_query('SELECT * FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $nid, $type, $id);
+  $info = array();
+  while($row = db_fetch_array($result)) {
+    $info[$row['meta_type']] = $row;
+  }
+  return $info;
 }
 
 /**
@@ -400,9 +413,6 @@ function casetracker_form_comment_form_alter(&$form, &$form_state) {
   $node = isset($form['nid']['#value']) ? node_load($form['nid']['#value']) : NULL;
   $form['#node'] = $node;
   casetracker_case_form_common($form);
-
-  // // necessary for our casetracker_comment() callback.
-  // $form['revision_id'] = array('#type' => 'hidden', '#value' => $node->vid);
 }
 
 /**
@@ -781,12 +791,12 @@ function theme_casetracker_case_form_common($form) {
 /**
  * Theme the case summary shown at the beginning of a case's node.
  *
- * @param $case
- *   The node object of the case being viewed.
- * @param $project
- *   The node object of the project this case belongs to.
+ * @param $template_name
+ *
+ * @param $info
+ *
  */
-function theme_casetracker_case_summary($template_name, $node) {
+function theme_casetracker_case_summary($template_name, $info) {
   $rows = array();
   ctools_include('export'); 
   ctools_include('plugins');
@@ -794,7 +804,7 @@ function theme_casetracker_case_summary($template_name, $node) {
   foreach ($templates[$template_name]->properties as $p) {
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
-    $rows[] = array($type->display($p, $node));
+    $rows[] = array($type->display($p, $info));
   }
   return theme('table', NULL, $rows, array('class' => 'summary'));
 }
