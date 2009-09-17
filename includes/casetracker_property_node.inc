@@ -4,7 +4,7 @@
  * 
  */
 class casetracker_property_node extends casetracker_views_property {
-  function setting_form(&$form, $property) {
+  function setting_form(&$form) {
     parent::setting_form(&$form, 'node');
   }
 
@@ -13,7 +13,7 @@ class casetracker_property_node extends casetracker_views_property {
     // On node preview the form logic can't translate assign_to back to a uid for
     // us so we need to be able handle it either way.
     // if (is_numeric($case->casetracker->assign_to)) {
-      $node = node_load(array('nid' => $info[$this->property->id]['meta_id']));
+      $node = node_load(array('nid' => $info[$this->property->id]));
     // }
     // else {
     //   $account = user_load(array('name' => $case->casetracker->assign_to));

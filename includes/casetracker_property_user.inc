@@ -34,7 +34,7 @@ class casetracker_property_user extends casetracker_views_property {
     // On node preview the form logic can't translate assign_to back to a uid for
     // us so we need to be able handle it either way.
     // if (is_numeric($case->casetracker->assign_to)) {
-      $account = user_load(array('uid' => $info[$this->property->id]['meta_id']));
+      $account = user_load(array('uid' => $info[$this->property->id]));
     // }
     // else {
     //   $account = user_load(array('name' => $case->casetracker->assign_to));
@@ -78,4 +78,33 @@ class casetracker_property_user extends casetracker_views_property {
   // // Set the default value if it is valid.
   // $form['casetracker']['assign_to']['#default_value'] = in_array($default_assign_to, $options, TRUE) ? $default_assign_to : NULL;
 
-// DISPLAY
+// LOOKUPS
+
+// /**
+//  * Given a user name, returns the uid of that account.
+//  * If the passed name is not found, returns 0.
+//  * See also casetracker_get_name().
+//  */
+// function casetracker_get_uid($name = NULL, $reset = FALSE) {
+//   static $users = array();
+//   if (!isset($users[$name]) || $reset) {
+//     $result = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $name));
+//     $users[$name] = $result ? $result : 0;
+//   }
+//   return $users[$name];
+// }
+// 
+// /**
+//  * Given a uid, returns the name of that account. If the passed uid is
+//  * not found, returns the default "assign to" name as specified in the
+//  * settings. @todo This may not always be desired, but is how we use it.
+//  * See also casetracker_get_uid().
+//  */
+// function casetracker_get_name($uid = NULL, $reset = FALSE) {
+//   static $users = array();
+//   if (!isset($users[$uid]) || $reset) {
+//     $result = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $uid));
+//     $users[$uid] = $result ? $result : '';
+//   }
+//   return !empty($users[$uid]) ? $users[$uid] : variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous')));
+// }

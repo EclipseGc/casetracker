@@ -207,6 +207,11 @@ function casetracker_casetracker_properties() {
     'handler' => 'casetracker_property_state',
     'file' => 'includes/casetracker_property_state.inc'
   );
+  $info['casetracker_property_title'] = array(
+    'title' => t('Title'),
+    'handler' => 'casetracker_property_title',
+    'file' => 'includes/casetracker_property_title.inc'
+  );
   $info['casetracker_views_property'] = array(
     'handler' => 'casetracker_views_property',
     'file' => 'includes/casetracker_views_property.inc'
@@ -363,11 +368,11 @@ function casetracker_comment(&$comment, $op) {
       case 'view':
         // Is this a preview?
         if (isset($comment->casetracker)) {
-          // Fake the info array for theme_casetracker_case_summary()
-          $info = array();
-          foreach ($comment->casetracker as $k => $v) {
-            $info[$k] = array('meta_id' => $v);
-          }
+          // // Fake the info array for theme_casetracker_case_summary()
+          // $info = array();
+          // foreach ($comment->casetracker as $k => $v) {
+          //   $info[$k] = array('meta_id' => $v);
+          // }
         }
         else {
           $info = casetracker_get_update($comment->nid, 'comment', $comment->cid);
@@ -390,10 +395,10 @@ function casetracker_comment(&$comment, $op) {
  * @return an array of the state changes in the update.
  */
 function casetracker_get_update($nid, $type, $id) {
-  $result = db_query('SELECT * FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $nid, $type, $id);
+  $result = db_query('SELECT meta_type, meta_id FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $nid, $type, $id);
   $info = array();
   while($row = db_fetch_array($result)) {
-    $info[$row['meta_type']] = $row;
+    $info[$row['meta_type']] = $row['meta_id'];
   }
   return $info;
 }
@@ -823,34 +828,5 @@ function casetracker_is_case($node) {
 //     return in_array($type, variable_get('casetracker_project_node_types', array('casetracker_basic_project')), TRUE);
 //   }
 //   return FALSE;
-// }
-
-// /**
-//  * Given a user name, returns the uid of that account.
-//  * If the passed name is not found, returns 0.
-//  * See also casetracker_get_name().
-//  */
-// function casetracker_get_uid($name = NULL, $reset = FALSE) {
-//   static $users = array();
-//   if (!isset($users[$name]) || $reset) {
-//     $result = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $name));
-//     $users[$name] = $result ? $result : 0;
-//   }
-//   return $users[$name];
-// }
-// 
-// /**
-//  * Given a uid, returns the name of that account. If the passed uid is
-//  * not found, returns the default "assign to" name as specified in the
-//  * settings. @todo This may not always be desired, but is how we use it.
-//  * See also casetracker_get_uid().
-//  */
-// function casetracker_get_name($uid = NULL, $reset = FALSE) {
-//   static $users = array();
-//   if (!isset($users[$uid]) || $reset) {
-//     $result = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $uid));
-//     $users[$uid] = $result ? $result : '';
-//   }
-//   return !empty($users[$uid]) ? $users[$uid] : variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous')));
 // }
 

@@ -37,7 +37,7 @@ class casetracker_property_state {
    * 
    */
   function display($info) {
-    $state = casetracker_state_load($info[$this->property->id]['meta_id'], $this->property->realm);
+    $state = casetracker_state_load($info[$this->property->id], $this->property->realm);
     return '<span class="' . $this->property->realm. '">' . $this->property->name . ': <strong>'. $state->title . '</strong></span>';
   }
 }
