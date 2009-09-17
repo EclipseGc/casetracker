@@ -34,14 +34,15 @@ function casetracker_ctools_plugin_api($module, $api) {
  */
 function casetracker_help($path, $arg) {
   switch ($path) {
-    case 'admin/settings/casetracker/states':
-      return '<p>'. t('Current Case Tracker case states are listed below.') .'</p>';
-    case 'admin/settings/casetracker/states/add':
-      return '<p>'. t('You may add a new case state below.') .'</p>';
-    case 'admin/settings/casetracker/states/edit/'. arg(4):
-      return '<p>'. t('You may edit an existing case state below.') .'</p>';
-    case 'admin/settings/casetracker':
-      return '<p>'. t('Configure the various Case Tracker options with these settings.') .'</p>';
+    // TODO this needs attention.
+    // case 'admin/settings/casetracker/states':
+    //   return '<p>'. t('Current Case Tracker case states are listed below.') .'</p>';
+    // case 'admin/settings/casetracker/states/add':
+    //   return '<p>'. t('You may add a new case state below.') .'</p>';
+    // case 'admin/settings/casetracker/states/edit/'. arg(4):
+    //   return '<p>'. t('You may edit an existing case state below.') .'</p>';
+    // case 'admin/settings/casetracker':
+    //   return '<p>'. t('Configure the various Case Tracker options with these settings.') .'</p>';
   }
 }
 
@@ -648,41 +649,41 @@ function casetracker_autocomplete($string) {
   drupal_json($matches);
 }
 
-/**
- * Returns an query string needed in case of Organic Groups
- * providing preselected audience checkboxes for projects as groups (og)
- * 
- * @param   object  CT project
- * @return  string
- */
-function _casetracker_get_og_query_string(&$project) {
-  $querystring = array();
-  // checking if project is group
-  if ($project->type == 'group') {
-    $querystring[] = 'gids[]='. $project->nid;
-    //checking if group-project is part of another group
-    if (isset($project->og_groups) 
-      && is_array($project->og_groups) 
-    ) {
-      foreach ($project->og_groups as $group) {
-        $querystring[] = 'gids[]='. $group;
-      }
-    }
-  }
-  //checking if project is part of a group
-  elseif (isset($project->og_groups) 
-    && is_array($project->og_groups) 
-    && $project->type !== 'group'
-  ) {
-    foreach ($project->og_groups as $group) {
-      $querystring[] = 'gids[]='. $group;
-    }
-  }
- 
-  return (0 < count($querystring))
-      ? implode('&', $querystring)
-      : NULL;
-}
+// /**
+//  * Returns an query string needed in case of Organic Groups
+//  * providing preselected audience checkboxes for projects as groups (og)
+//  * 
+//  * @param   object  CT project
+//  * @return  string
+//  */
+// function _casetracker_get_og_query_string(&$project) {
+//   $querystring = array();
+//   // checking if project is group
+//   if ($project->type == 'group') {
+//     $querystring[] = 'gids[]='. $project->nid;
+//     //checking if group-project is part of another group
+//     if (isset($project->og_groups) 
+//       && is_array($project->og_groups) 
+//     ) {
+//       foreach ($project->og_groups as $group) {
+//         $querystring[] = 'gids[]='. $group;
+//       }
+//     }
+//   }
+//   //checking if project is part of a group
+//   elseif (isset($project->og_groups) 
+//     && is_array($project->og_groups) 
+//     && $project->type !== 'group'
+//   ) {
+//     foreach ($project->og_groups as $group) {
+//       $querystring[] = 'gids[]='. $group;
+//     }
+//   }
+//  
+//   return (0 < count($querystring))
+//       ? implode('&', $querystring)
+//       : NULL;
+// }
 
 /**
  * THEME ==============================================================
@@ -806,48 +807,48 @@ function casetracker_is_case($node) {
   return false;
 }
 
-/**
- * API function for checking whether a node type is a casetracker project.
- */
-function casetracker_is_project($node) {
-  if (is_object($node) && !empty($node->type)) {
-    $type = $node->type;
-  }
-  else if (is_string($node)) {
-    $type = $node;
-  }
-  if ($type) {
-    return in_array($type, variable_get('casetracker_project_node_types', array('casetracker_basic_project')), TRUE);
-  }
-  return FALSE;
-}
+// /**
+//  * API function for checking whether a node type is a casetracker project.
+//  */
+// function casetracker_is_project($node) {
+//   if (is_object($node) && !empty($node->type)) {
+//     $type = $node->type;
+//   }
+//   else if (is_string($node)) {
+//     $type = $node;
+//   }
+//   if ($type) {
+//     return in_array($type, variable_get('casetracker_project_node_types', array('casetracker_basic_project')), TRUE);
+//   }
+//   return FALSE;
+// }
 
-/**
- * Given a user name, returns the uid of that account.
- * If the passed name is not found, returns 0.
- * See also casetracker_get_name().
- */
-function casetracker_get_uid($name = NULL, $reset = FALSE) {
-  static $users = array();
-  if (!isset($users[$name]) || $reset) {
-    $result = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $name));
-    $users[$name] = $result ? $result : 0;
-  }
-  return $users[$name];
-}
-
-/**
- * Given a uid, returns the name of that account. If the passed uid is
- * not found, returns the default "assign to" name as specified in the
- * settings. @todo This may not always be desired, but is how we use it.
- * See also casetracker_get_uid().
- */
-function casetracker_get_name($uid = NULL, $reset = FALSE) {
-  static $users = array();
-  if (!isset($users[$uid]) || $reset) {
-    $result = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $uid));
-    $users[$uid] = $result ? $result : '';
-  }
-  return !empty($users[$uid]) ? $users[$uid] : variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous')));
-}
+// /**
+//  * Given a user name, returns the uid of that account.
+//  * If the passed name is not found, returns 0.
+//  * See also casetracker_get_name().
+//  */
+// function casetracker_get_uid($name = NULL, $reset = FALSE) {
+//   static $users = array();
+//   if (!isset($users[$name]) || $reset) {
+//     $result = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $name));
+//     $users[$name] = $result ? $result : 0;
+//   }
+//   return $users[$name];
+// }
+// 
+// /**
+//  * Given a uid, returns the name of that account. If the passed uid is
+//  * not found, returns the default "assign to" name as specified in the
+//  * settings. @todo This may not always be desired, but is how we use it.
+//  * See also casetracker_get_uid().
+//  */
+// function casetracker_get_name($uid = NULL, $reset = FALSE) {
+//   static $users = array();
+//   if (!isset($users[$uid]) || $reset) {
+//     $result = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $uid));
+//     $users[$uid] = $result ? $result : '';
+//   }
+//   return !empty($users[$uid]) ? $users[$uid] : variable_get('casetracker_default_assign_to', variable_get('anonymous', t('Anonymous')));
+// }
 
