@@ -103,7 +103,8 @@ function casetracker_template_edit($form_state, $template = NULL) {
     );
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
-    $type->setting_form($element, $p);
+    $type->set($p);
+    $type->setting_form($element);
     $form['properties'][] = $element;
   }
 

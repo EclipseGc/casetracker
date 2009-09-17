@@ -5,8 +5,8 @@
  */
 class casetracker_property_user extends casetracker_views_property {
 
-  function setting_form(&$form, $property) {
-    parent::setting_form(&$form, $property, 'users');
+  function setting_form(&$form) {
+    parent::setting_form(&$form, 'users');
   }
 
   /**
@@ -29,18 +29,18 @@ class casetracker_property_user extends casetracker_views_property {
     return $options;
   }
   
-  function display($property, $info) {
+  function display($info) {
     // TODO test preview...
     // On node preview the form logic can't translate assign_to back to a uid for
     // us so we need to be able handle it either way.
     // if (is_numeric($case->casetracker->assign_to)) {
-      $account = user_load(array('uid' => $info[$property->id]['meta_id']));
+      $account = user_load(array('uid' => $info[$this->property->id]['meta_id']));
     // }
     // else {
     //   $account = user_load(array('name' => $case->casetracker->assign_to));
     // }
     
-    return '<span class="' . $property->id. '">' . $property->name . ': <strong>'. theme('username', $account) . '</strong></span>';
+    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. theme('username', $account) . '</strong></span>';
   }
 }
 

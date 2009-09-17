@@ -454,7 +454,8 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
     foreach ($templates[$template_name]->properties as $p) {
       $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
       $type = new $class();
-      $type->option_form($form['casetracker'], $p, $node);
+      $type->set($p);
+      $type->option_form($form['casetracker'], $node);
     }
   }
 }
@@ -753,7 +754,8 @@ function theme_casetracker_case_summary($template_name, $info) {
   foreach ($templates[$template_name]->properties as $p) {
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
-    $rows[] = array($type->display($p, $info));
+    $type->set($p);
+    $rows[] = array($type->display($info));
   }
   return theme('table', NULL, $rows, array('class' => 'summary'));
 }

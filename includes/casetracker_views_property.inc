@@ -5,7 +5,11 @@
 */
 class casetracker_views_property {
   
-  function setting_form(&$form, $property, $base_table = null) {
+  function set($p) {
+    $this->property = $p;
+  }
+  
+  function setting_form(&$form, $base_table = null) {
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
@@ -67,19 +71,19 @@ class casetracker_views_property {
   /**
    * 
    */
-  function option_form(&$form, $property, $node) {
-    $form[$property->id] = array(
+  function option_form(&$form, $node) {
+    $form[$this->property->id] = array(
       '#type' => 'select',
-      '#title' => $property->name,
-      '#options' => $this->options($property->view),
-      '#default_value' => isset($node->casetracker->{$property->id}) ? null : $node->casetracker->{$property->id},
+      '#title' => $this->property->name,
+      '#options' => $this->options($this->property->view),
+      '#default_value' => isset($node->casetracker->{$this->property->id}) ? null : $node->casetracker->{$this->property->id},
     );
   }
   
   /**
    * 
    */
-  function display($property, $info) {
-    return '<span class="' . $property->id. '">' . $property->name . ': <strong>'. $info[$property->id]['meta_id'] . '</strong></span>';
+  function display($info) {
+    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. $info[$this->property->id]['meta_id'] . '</strong></span>';
   }
 }
