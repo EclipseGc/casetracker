@@ -644,42 +644,6 @@ function casetracker_autocomplete($string) {
   drupal_json($matches);
 }
 
-// /**
-//  * Returns an query string needed in case of Organic Groups
-//  * providing preselected audience checkboxes for projects as groups (og)
-//  * 
-//  * @param   object  CT project
-//  * @return  string
-//  */
-// function _casetracker_get_og_query_string(&$project) {
-//   $querystring = array();
-//   // checking if project is group
-//   if ($project->type == 'group') {
-//     $querystring[] = 'gids[]='. $project->nid;
-//     //checking if group-project is part of another group
-//     if (isset($project->og_groups) 
-//       && is_array($project->og_groups) 
-//     ) {
-//       foreach ($project->og_groups as $group) {
-//         $querystring[] = 'gids[]='. $group;
-//       }
-//     }
-//   }
-//   //checking if project is part of a group
-//   elseif (isset($project->og_groups) 
-//     && is_array($project->og_groups) 
-//     && $project->type !== 'group'
-//   ) {
-//     foreach ($project->og_groups as $group) {
-//       $querystring[] = 'gids[]='. $group;
-//     }
-//   }
-//  
-//   return (0 < count($querystring))
-//       ? implode('&', $querystring)
-//       : NULL;
-// }
-
 /**
  * THEME ==============================================================
  */
