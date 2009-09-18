@@ -247,30 +247,8 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 
       case 'insert':
       case 'update':
-        // First we write the pointer to the current state.
-        $record = array(
-          'nid' => $node->nid,
-          'type' => 'node',
-          'id' => $node->vid,
-          'title' => $node->title,
-        );
-        if ($node->is_new) {
-          drupal_write_record('casetracker_case', $record);
-        }
-        else {
-          drupal_write_record('casetracker_case', $record, array('type', 'id'));
-        }
-        // Then we write the state details.
-        foreach ($node->casetracker as $k => $v) {
-          $record['meta_type'] = $k;
-          $record['meta_id'] = $v;
-          if ($node->revision || $node->is_new) {
-            drupal_write_record('casetracker_case_status', $record);
-          }
-          else {
-            drupal_write_record('casetracker_case_status', $record, array('type', 'id'));
-          }
-        }
+        $update = (bool)$node->revision;
+        casetracker_save_update($node->nid, $node->vid, 'node', $node->casetracker, $node->is_new, $update);
         break;
 
       case 'load':
@@ -337,28 +315,8 @@ function casetracker_comment(&$comment, $op) {
     switch ($op) {
       case 'insert':
       case 'update':
-        $record = array(
-          'nid' => $node->nid,
-          'type' => 'comment',
-          'id' => $comment['cid'],
-          'title' => $node->title,
-        );
-        // First we write the pointer to the current state only for new comments.
-        if ($op == 'insert') {
-          drupal_write_record('casetracker_case', $record);
-        }
-
-        // Then we write the state details.
-        foreach ($comment['casetracker'] as $k => $v) {
-          $record['meta_type'] = $k;
-          $record['meta_id'] = $v;
-          if ($op == 'insert') {
-            drupal_write_record('casetracker_case_status', $record);
-          }
-          else {
-            drupal_write_record('casetracker_case_status', $record, array('type', 'id'));
-          }
-        }
+        $new = ($op == 'insert');
+        casetracker_save_update($node->nid, $comment['cid'], 'comment', $comment['casetracker'], $new);
         break;
       // case 'delete':
       //   // @todo theoretically, if you delete a comment, we should reset all the values
@@ -394,6 +352,44 @@ function casetracker_get_update($nid, $type, $id) {
     $info[$row['meta_type']] = $row['meta_id'];
   }
   return $info;
+}
+
+/**
+ * Save a state update
+ *
+ * @param $nid
+ *   The case nid.
+ * @param $type
+ *   The type of the case update.
+ * @param $info
+ *   The casetracker info to be saved..
+ * @param $current
+ *   TRUE if the state pointer should be updated to point to this set of records.
+ * @param $exists
+ *   Set to TRUE if this is an update to an existing set of state record.
+ */
+function casetracker_save_update($nid, $id, $type, $info, $current = TRUE, $exists = FALSE) {
+    $record = array(
+    'nid' => $nid,
+    'type' => $type,
+    'id' => $id,
+  );
+  // First we write the pointer to the current state only for new comments.
+  if ($current) {
+    drupal_write_record('casetracker_case', $record);
+  }
+
+  // Then we write the state details.
+  foreach ($info as $k => $v) {
+    $record['meta_type'] = $k;
+    $record['meta_id'] = $v;
+    if ($current || $exists) {
+      drupal_write_record('casetracker_case_status', $record);
+    }
+    else {
+      drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'meta_type'));
+    }
+  }
 }
 
 /**
