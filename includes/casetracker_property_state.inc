@@ -29,7 +29,7 @@ class casetracker_property_state {
       '#type' => 'select',
       '#title' => $this->property->name,
       '#options' => casetracker_realm_load($this->property->realm),
-      '#default_value' => isset($node->casetracker->{$this->property->id}) ? null : $node->casetracker->{$this->property->id},
+      '#default_value' => isset($node->casetracker->{$this->property->id}) ? $node->casetracker->{$this->property->id} : null,
     );
   }
 
