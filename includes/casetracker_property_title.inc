@@ -25,19 +25,19 @@ class casetracker_property_title {
   }
 
   function option_form(&$form, $node) {
-    // $form[$this->property->id] = array(
-    //   '#type' => 'select',
-    //   '#title' => $this->property->name,
-    //   '#options' => casetracker_realm_load($this->property->realm),
-    //   '#default_value' => isset($node->casetracker->{$this->property->id}) ? null : $node->casetracker->{$this->property->id},
-    // );
+    if (isset($node->nid)) {
+      $form[$this->property->id] = array(
+        '#type' => 'textfield',
+        '#title' => $this->property->name,
+        '#default_value' => isset($node->casetracker->{$this->property->id}) ? $node->title : $node->casetracker->{$this->property->id},
+      );      
+    }
   }
 
   /**
    * 
    */
   function display($info) {
-    // $state = casetracker_state_load($info[$this->property->id]['meta_id'], $this->property->realm);
-    // return '<span class="' . $this->property->realm. '">' . $this->property->name . ': <strong>'. $state->title . '</strong></span>';
+    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. check_plain($info[$this->property->id]['meta_id']) . '</strong></span>';
   }
 }
