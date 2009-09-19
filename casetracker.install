@@ -99,12 +99,6 @@ function casetracker_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'title' => array(
-        'description' => 'Title of the case.',
-        'type' => 'varchar',
-        'length' => 250,
-        'not null' => FALSE,
-      ),
       'meta_type' => array(
         'description' => 'The type of meta data',
         'type' => 'varchar',
@@ -113,7 +107,7 @@ function casetracker_schema() {
       'meta_id' => array(
         'description' => 'Store the id.',
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
       ),
     ),
     'indexes' => array(
