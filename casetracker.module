@@ -267,11 +267,11 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       case 'insert':
       case 'update':
         $update = (bool)$node->revision;
-        casetracker_save_update($node, $node->vid, 'node', $node->casetracker, $node->is_new, $update);
+        casetracker_save_update($node, 'node', $node->vid, $node->casetracker, $node->is_new, $update);
         break;
 
       case 'load':
-        return array('casetracker' => casetracker_get_update($node->nid, 'node', $node->vid));
+        return array('casetracker' => casetracker_get_update($node, 'node', $node->vid));
 
       case 'view':
         // todo handle preview.
@@ -335,7 +335,7 @@ function casetracker_comment(&$comment, $op) {
       case 'insert':
       case 'update':
         $new = ($op == 'insert');
-        casetracker_save_update($node, $comment['cid'], 'comment', $comment['casetracker'], $new);
+        casetracker_save_update($node, 'comment', $comment['cid'], $comment['casetracker'], $new);
         break;
       // case 'delete':
       //   // @todo theoretically, if you delete a comment, we should reset all the values
@@ -345,7 +345,7 @@ function casetracker_comment(&$comment, $op) {
       case 'view':
         // If this is a preview the casetracker property will already be populated.
         if (!isset($comment->casetracker)) {
-          $comment->casetracker = casetracker_get_update($comment->nid, 'comment', $comment->cid);
+          $comment->casetracker = casetracker_get_update($node, 'comment', $comment->cid);
         }
         $comment->comment = theme('casetracker_case_summary', $template_name, $comment->casetracker) . $comment->comment;        
         break;
@@ -364,8 +364,8 @@ function casetracker_comment(&$comment, $op) {
  *   The numeric id of the case update.
  * @return an array of the state changes in the update.
  */
-function casetracker_get_update($nid, $type, $id) {
-  $result = db_query('SELECT meta_type, meta_id FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $nid, $type, $id);
+function casetracker_get_update($node, $type, $id) {
+  $result = db_query('SELECT meta_type, meta_id FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
   $info = array();
   while($row = db_fetch_array($result)) {
     $info[$row['meta_type']] = $row['meta_id'];
@@ -380,6 +380,8 @@ function casetracker_get_update($nid, $type, $id) {
  *   The case node.
  * @param $type
  *   The type of the case update.
+ * @param $id
+ *   The id of the update.
  * @param $info
  *   The casetracker info to be saved..
  * @param $current
@@ -387,7 +389,7 @@ function casetracker_get_update($nid, $type, $id) {
  * @param $exists
  *   Set to TRUE if this is an update to an existing set of state record.
  */
-function casetracker_save_update($node, $id, $type, $info, $current = TRUE, $exists = FALSE) {  
+function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exists = FALSE) {  
   if ($template_name = casetracker_is_case($node)) {
     $template = casetracker_template_load($template_name);
 
