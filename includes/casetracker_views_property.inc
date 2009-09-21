@@ -5,23 +5,19 @@
 */
 class casetracker_views_property extends casetracker_property {
   
-  function set($p) {
-    $this->property = $p;
-  }
-  
   function setting_form(&$form, $base_table = null) {
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
       '#options' => $this->views_options($base_table),
-      '#default_value' => $property->view,
+      '#default_value' => $this->view,
     );
     // TODO default value via AJAX
     $form['default_value'] = array(
       '#type' => 'select',
       '#title' => t('Default value'),
-      '#options' => $this->options($property->view),
-      '#default_value' => $property->default_value
+      '#options' => $this->options($this->view),
+      '#default_value' => $this->default_value
     );
   }
   
@@ -74,9 +70,9 @@ class casetracker_views_property extends casetracker_property {
   function option_form(&$form, $node) {
     $form[$this->property->id] = array(
       '#type' => 'select',
-      '#title' => $this->property->name,
-      '#options' => $this->options($this->property->view),
-      '#default_value' => isset($node->casetracker->{$this->property->id}) ? null : $node->casetracker->{$this->property->id},
+      '#title' => $this->name,
+      '#options' => $this->options($this->view),
+      '#default_value' => isset($node->casetracker->{$this->id}) ? null : $node->casetracker->{$this->id},
     );
   }
   
@@ -84,6 +80,6 @@ class casetracker_views_property extends casetracker_property {
    * 
    */
   function display($info) {
-    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. $info[$this->property->id] . '</strong></span>';
+    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. $info[$this->id] . '</strong></span>';
   }
 }

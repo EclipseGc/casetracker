@@ -104,10 +104,17 @@ function casetracker_schema() {
         'type' => 'varchar',
         'length' => 10,
       ),
-      'meta_id' => array(
-        'description' => 'Store the id.',
+      'value' => array(
+        'description' => 'Store the id (value) of this update.',
         'type' => 'varchar',
         'length' => 255,
+      ),
+      // not sure...
+      'previous' => array(
+        'description' => 'The last update which changed this state',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
     ),
     'indexes' => array(

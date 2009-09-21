@@ -4,10 +4,16 @@
  * 
  */
 class casetracker_property {
+
+  /**
+   * Set all the attributes on the property.
+   */
   function set($p) {
-    $this->property = $p;
+    foreach ($p as $k => $v) {
+      $this->{$k} = $v;
+    }
   }
-  
+
   function setting_form(&$form) {}
 
   function option_form(&$form, $node) {}
@@ -18,6 +24,6 @@ class casetracker_property {
    * 
    */
   function display($info) {
-    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. check_plain($info[$this->property->id]['meta_id']) . '</strong></span>';
+    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. check_plain($info[$this->id]['value']) . '</strong></span>';
   }
 }

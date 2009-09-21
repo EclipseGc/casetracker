@@ -7,10 +7,10 @@ class casetracker_property_title extends casetracker_property {
 
   function option_form(&$form, $node) {
     if (isset($node->nid)) {
-      $form[$this->property->id] = array(
+      $form[$this->id] = array(
         '#type' => 'textfield',
-        '#title' => $this->property->name,
-        '#default_value' => isset($node->casetracker->{$this->property->id}) ? $node->title : $node->casetracker->{$this->property->id},
+        '#title' => $this->name,
+        '#default_value' => isset($node->casetracker->{$this->id}) ? $node->title : $node->casetracker->{$this->id},
       );      
     }
   }
@@ -21,7 +21,7 @@ class casetracker_property_title extends casetracker_property {
   function save(&$record, $current, $exits) {
     if ($current) {
        // not sure about this, need to check on how view and node modules treat this table.
-      db_query("UPDATE {node} SET title = '%s'", $record['meta_id']);
+      db_query("UPDATE {node} SET title = '%s'", $record['value']);
     }
   }
 
@@ -29,6 +29,6 @@ class casetracker_property_title extends casetracker_property {
    * 
    */
   function display($info) {
-    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. check_plain($info[$this->property->id]) . '</strong></span>';
+    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. check_plain($info[$this->id]) . '</strong></span>';
   }
 }

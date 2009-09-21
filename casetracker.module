@@ -263,16 +263,13 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   // CASES
   if ($template_name = casetracker_is_case($node)) {
     switch ($op) {
-
       case 'insert':
       case 'update':
         $update = (bool)$node->revision;
         casetracker_save_update($node, 'node', $node->vid, $node->casetracker, $node->is_new, $update);
         break;
-
       case 'load':
         return array('casetracker' => casetracker_get_update($node, 'node', $node->vid));
-
       case 'view':
         // todo handle preview.
         $node->content['casetracker_case_summary'] = array(
@@ -280,7 +277,6 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
           '#weight' => -10
         );
         break;
-
       case 'delete':
         // // delete case and its comments.
         // $comment_results = db_query("SELECT cid FROM {comments} WHERE nid = %d", $node->nid);
@@ -356,8 +352,8 @@ function casetracker_comment(&$comment, $op) {
 /**
  * Retrieve the effects of a change.
  *
- * @param $nid
- *   The case nid.
+ * @param $node
+ *   The case node.
  * @param $type
  *   The type of the case update.
  * @param $id
@@ -365,10 +361,17 @@ function casetracker_comment(&$comment, $op) {
  * @return an array of the state changes in the update.
  */
 function casetracker_get_update($node, $type, $id) {
-  $result = db_query('SELECT meta_type, meta_id FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
   $info = array();
-  while($row = db_fetch_array($result)) {
-    $info[$row['meta_type']] = $row['meta_id'];
+  if ($template_name = casetracker_is_case($node)) {
+    $template = casetracker_template_load($template_name);
+
+    $result = db_query('SELECT meta_type, value FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
+    while($row = db_fetch_array($result)) {
+      $info[$row['meta_type']] = $row['value'];
+    }
+
+    // TODO allow plugins to prepare the data after it's loaded.
+
   }
   return $info;
 }
@@ -405,12 +408,12 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
     }
 
     // Then we write the state details.
-    foreach ($template->properties as $p) {
-      $record['meta_type'] = $p->property->id;
-      $record['meta_id'] = $info[$p->property->id];
+    foreach ($template->properties as $property) {
+      $record['meta_type'] = $property->id;
+      $record['value'] = $info[$property->id];
 
       // Allow the plugin to take action before the record is written.
-      $p->save($record, $current, $exits);
+      $property->save($record, $current, $exits);
 
       if ($current || $exists) {
         drupal_write_record('casetracker_case_status', $record);
