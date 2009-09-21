@@ -3,7 +3,7 @@
 /**
 * Base handler for views based properties.
 */
-class casetracker_views_property {
+class casetracker_views_property extends casetracker_property {
   
   function set($p) {
     $this->property = $p;

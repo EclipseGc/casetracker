@@ -70,8 +70,6 @@ function casetracker_templates_page() {
  * Displays a form for adding or editing a case template.
  */
 function casetracker_template_edit($form_state, $template = NULL) {
-  ctools_include('plugins');
-
   $form = array();
   $form['name'] = array(
     '#type' => 'textfield',
@@ -85,7 +83,7 @@ function casetracker_template_edit($form_state, $template = NULL) {
     $element = array('#type' => 'fieldset');
     $element['type'] = array(
       '#type' => 'value',
-      '#value' => $p->type,
+      '#value' => $p->property->type,
     );
     $element["remove"] = array(
       '#type' => 'checkbox',
@@ -94,17 +92,14 @@ function casetracker_template_edit($form_state, $template = NULL) {
    $element['name'] = array(
       '#type' => 'textfield',
       '#title' => t('Name'),
-      '#default_value' => $p->name,
+      '#default_value' => $p->property->name,
     );
     $element['id'] = array(
       '#type' => 'textfield',
       '#title' => t('Id'),
-      '#default_value' => $p->id,
+      '#default_value' => $p->property->id,
     );
-    $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
-    $type = new $class();
-    $type->set($p);
-    $type->setting_form($element);
+    $p->setting_form($element);
     $form['properties'][] = $element;
   }
 
@@ -134,7 +129,7 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#value' => t('Add'),
     '#submit' => array('casetracker_property_add_submit'),
   );
-  
+
   return $form;
 }
 

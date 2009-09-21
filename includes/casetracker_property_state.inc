@@ -3,10 +3,7 @@
 /**
 * Case meta-data handler for the state/realm system.
 */
-class casetracker_property_state {
-  function set($p) {
-    $this->property = $p;
-  }
+class casetracker_property_state extends casetracker_property {
   
   function setting_form(&$form) {
     $form['realm'] = array(

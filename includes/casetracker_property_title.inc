@@ -3,26 +3,7 @@
 /**
  * 
  */
-class casetracker_property_title {
-  function set($p) {
-    $this->property = $p;
-  }
-  
-  function setting_form(&$form) {
-    // $form['realm'] = array(
-    //   '#type' => 'select',
-    //   '#title' => t('Realm'),
-    //   '#options' => casetracker_realm_list(),
-    //   '#default_value' => $this->property->realm,
-    // );
-    // // TODO default value via AJAX
-    // $form['default_state'] = array(
-    //   '#type' => 'select',
-    //   '#title' => t('Default value'),
-    //   '#options' => casetracker_realm_load($this->property->realm),
-    //   '#default_value' => $this->property->default_state,
-    // );
-  }
+class casetracker_property_title extends casetracker_property {
 
   function option_form(&$form, $node) {
     if (isset($node->nid)) {
@@ -33,11 +14,21 @@ class casetracker_property_title {
       );      
     }
   }
+  
+  /**
+   * Update the {node}.title record.
+   */
+  function save(&$record, $current, $exits) {
+    if ($current) {
+       // not sure about this, need to check on how view and node modules treat this table.
+      db_query("UPDATE {node} SET title = '%s'", $record['meta_id']);
+    }
+  }
 
   /**
    * 
    */
   function display($info) {
-    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. check_plain($info[$this->property->id]['meta_id']) . '</strong></span>';
+    return '<span class="' . $this->property->id. '">' . $this->property->name . ': <strong>'. check_plain($info[$this->property->id]) . '</strong></span>';
   }
 }

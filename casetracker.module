@@ -202,19 +202,38 @@ function casetracker_menu() {
  */
 function casetracker_casetracker_properties() {
   $info = array();
+  $info['casetracker_property'] = array(
+    'handler' => array(
+      'class' => 'casetracker_property',
+      'file' => 'casetracker_property.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),
+  );
   $info['casetracker_property_state'] = array(
     'title' => t('State'),
-    'handler' => 'casetracker_property_state',
-    'file' => 'includes/casetracker_property_state.inc'
+    'handler' => array(
+      'parent' => 'casetracker_property',
+      'class' => 'casetracker_property_state',
+      'file' => 'casetracker_property_state.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),
   );
   $info['casetracker_property_title'] = array(
     'title' => t('Title'),
-    'handler' => 'casetracker_property_title',
-    'file' => 'includes/casetracker_property_title.inc'
+    'handler' => array(
+      'parent' => 'casetracker_property',
+      'class' => 'casetracker_property_title',
+      'file' => 'casetracker_property_title.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),
   );
   $info['casetracker_views_property'] = array(
-    'handler' => 'casetracker_views_property',
-    'file' => 'includes/casetracker_views_property.inc'
+    'handler' => array(
+      'parent' => 'casetracker_property',
+      'class' => 'casetracker_views_property',
+      'file' => 'casetracker_views_property.inc',
+      'path' => drupal_get_path('module', 'casetracker') . '/includes',
+    ),
   );
   $info['casetracker_property_node'] = array(
     'title' => t('Node'),
@@ -248,7 +267,7 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       case 'insert':
       case 'update':
         $update = (bool)$node->revision;
-        casetracker_save_update($node->nid, $node->vid, 'node', $node->casetracker, $node->is_new, $update);
+        casetracker_save_update($node, $node->vid, 'node', $node->casetracker, $node->is_new, $update);
         break;
 
       case 'load':
@@ -316,7 +335,7 @@ function casetracker_comment(&$comment, $op) {
       case 'insert':
       case 'update':
         $new = ($op == 'insert');
-        casetracker_save_update($node->nid, $comment['cid'], 'comment', $comment['casetracker'], $new);
+        casetracker_save_update($node, $comment['cid'], 'comment', $comment['casetracker'], $new);
         break;
       // case 'delete':
       //   // @todo theoretically, if you delete a comment, we should reset all the values
@@ -357,8 +376,8 @@ function casetracker_get_update($nid, $type, $id) {
 /**
  * Save a state update
  *
- * @param $nid
- *   The case nid.
+ * @param $node
+ *   The case node.
  * @param $type
  *   The type of the case update.
  * @param $info
@@ -368,26 +387,35 @@ function casetracker_get_update($nid, $type, $id) {
  * @param $exists
  *   Set to TRUE if this is an update to an existing set of state record.
  */
-function casetracker_save_update($nid, $id, $type, $info, $current = TRUE, $exists = FALSE) {
-    $record = array(
-    'nid' => $nid,
-    'type' => $type,
-    'id' => $id,
-  );
-  // First we write the pointer to the current state only for new comments.
-  if ($current) {
-    drupal_write_record('casetracker_case', $record);
-  }
+function casetracker_save_update($node, $id, $type, $info, $current = TRUE, $exists = FALSE) {  
+  if ($template_name = casetracker_is_case($node)) {
+    $template = casetracker_template_load($template_name);
 
-  // Then we write the state details.
-  foreach ($info as $k => $v) {
-    $record['meta_type'] = $k;
-    $record['meta_id'] = $v;
-    if ($current || $exists) {
-      drupal_write_record('casetracker_case_status', $record);
+    $record = array(
+      'nid' => $node->nid,
+      'type' => $type,
+      'id' => $id,
+    );
+
+    // First we write the pointer to the current state only for new comments.
+    if ($current) {
+      drupal_write_record('casetracker_case', $record);
     }
-    else {
-      drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'meta_type'));
+
+    // Then we write the state details.
+    foreach ($template->properties as $p) {
+      $record['meta_type'] = $p->property->id;
+      $record['meta_id'] = $info[$p->property->id];
+
+      // Allow the plugin to take action before the record is written.
+      $p->save($record, $current, $exits);
+
+      if ($current || $exists) {
+        drupal_write_record('casetracker_case_status', $record);
+      }
+      else {
+        drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'meta_type'));
+      }
     }
   }
 }
@@ -426,9 +454,7 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
   $node = $form['#node'];
 
   if ($template_name = casetracker_is_case($node)) {
-    ctools_include('export'); 
-    ctools_include('plugins');
-    $templates = ctools_export_load_object('casetracker_templates', 'names', array($template_name));
+    $template = casetracker_template_load($template_name);
 
     // On preview the case will be an array, we want an object.
     if (isset($node->build_mode) && $node->build_mode == NODE_BUILD_PREVIEW) {
@@ -445,11 +471,8 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
       '#theme' => 'casetracker_case_form_common',
     );
     
-    foreach ($templates[$template_name]->properties as $p) {
-      $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
-      $type = new $class();
-      $type->set($p);
-      $type->option_form($form['casetracker'], $node);
+    foreach ($template->properties as $property) {
+      $property->option_form($form['casetracker'], $node);
     }
   }
 }
@@ -459,8 +482,15 @@ function casetracker_case_form_common(&$form, $default_project = NULL) {
  */
 function casetracker_template_load($name) {
   ctools_include('export');
+  ctools_include('plugins');
   $templates = ctools_export_load_object('casetracker_templates', 'names', array($name));
-  return array_shift($templates);
+  foreach ($templates[$name]->properties as $k => $v) {
+    $class = ctools_plugin_load_class('casetracker', 'properties', $v->type, 'handler');
+    $type = new $class();
+    $type->set($v);
+    $templates[$name]->properties[$k] = $type;
+  }
+  return $templates[$name];
 }
 
 /**
