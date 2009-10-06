@@ -1,7 +1,8 @@
 <?php
 
 /**
- * 
+ * The node property allow relation of a case to another particular node. Most
+ * commonly this us used to relate a case to a project.
  */
 class casetracker_property_node extends casetracker_views_property {
   function setting_form(&$form) {
@@ -10,15 +11,7 @@ class casetracker_property_node extends casetracker_views_property {
 
   function display($info) {
     // TODO test preview...
-    // On node preview the form logic can't translate assign_to back to a uid for
-    // us so we need to be able handle it either way.
-    // if (is_numeric($case->casetracker->assign_to)) {
-      $node = node_load(array('nid' => $info[$this->id]));
-    // }
-    // else {
-    //   $account = user_load(array('name' => $case->casetracker->assign_to));
-    // }
-    
+    $node = node_load(array('nid' => $info[$this->id]));
     return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. check_plain($node->title) . '</strong></span>';
   }
 }
