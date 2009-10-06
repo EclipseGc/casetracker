@@ -365,9 +365,9 @@ function casetracker_get_update($node, $type, $id) {
   if ($template_name = casetracker_is_case($node)) {
     $template = casetracker_template_load($template_name);
 
-    $result = db_query('SELECT meta_type, value FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
+    $result = db_query('SELECT property, value FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
     while($row = db_fetch_array($result)) {
-      $info[$row['meta_type']] = $row['value'];
+      $info[$row['property']] = $row['value'];
     }
 
     // TODO allow plugins to prepare the data after it's loaded.
@@ -409,7 +409,7 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
 
     // Then we write the state details.
     foreach ($template->properties as $property) {
-      $record['meta_type'] = $property->id;
+      $record['property'] = $property->id;
       $record['value'] = $info[$property->id];
 
       // Allow the plugin to take action before the record is written.
@@ -419,7 +419,7 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
         drupal_write_record('casetracker_case_status', $record);
       }
       else {
-        drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'meta_type'));
+        drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'property'));
       }
     }
   }
