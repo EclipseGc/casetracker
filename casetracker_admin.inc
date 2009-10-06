@@ -83,7 +83,7 @@ function casetracker_template_edit($form_state, $template = NULL) {
     $element = array('#type' => 'fieldset');
     $element['type'] = array(
       '#type' => 'value',
-      '#value' => $p->property->type,
+      '#value' => $p->type,
     );
     $element["remove"] = array(
       '#type' => 'checkbox',
@@ -92,12 +92,12 @@ function casetracker_template_edit($form_state, $template = NULL) {
    $element['name'] = array(
       '#type' => 'textfield',
       '#title' => t('Name'),
-      '#default_value' => $p->property->name,
+      '#default_value' => $p->name,
     );
     $element['id'] = array(
       '#type' => 'textfield',
       '#title' => t('Id'),
-      '#default_value' => $p->property->id,
+      '#default_value' => $p->id,
     );
     $p->setting_form($element);
     $form['properties'][] = $element;
