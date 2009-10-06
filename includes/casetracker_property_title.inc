@@ -20,7 +20,9 @@ class casetracker_property_title extends casetracker_property {
    */
   function save(&$record, $current, $exits) {
     if ($current) {
-       // not sure about this, need to check on how view and node modules treat this table.
+       // Conveniently we can update node.title and have all 'node' listing in
+       // views pull from it without disrupting the normal happenings of 
+       // node_load which will pull from the node_revisions table.
       db_query("UPDATE {node} SET title = '%s'", $record['value']);
     }
   }
