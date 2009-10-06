@@ -278,12 +278,9 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         );
         break;
       case 'delete':
-        // // delete case and its comments.
-        // $comment_results = db_query("SELECT cid FROM {comments} WHERE nid = %d", $node->nid);
-        // while ($comment_result = db_fetch_object($comment_results)) {
-        //   db_query("DELETE FROM {casetracker_comment_status} WHERE cid = %d", $comment_result->cid);
-        // }
-        // db_query('DELETE FROM {casetracker_case} WHERE nid = %d', $node->nid);
+        // Delete case status records.
+        db_query('DELETE FROM {casetracker_case} WHERE nid = %d', $node->nid);
+        db_query('DELETE FROM {casetracker_case_status} WHERE nid = %d', $node->nid);
         break;
     }
   }
