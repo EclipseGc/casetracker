@@ -11,8 +11,8 @@ class casetracker_property_node extends casetracker_views_property {
 
   function display($info) {
     // TODO test preview...
-    $node = node_load(array('nid' => $info[$this->id]));
-    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. check_plain($node->title) . '</strong></span>';
+    $node = node_load(array('nid' => $info[$this->id]->value));
+    return '<span class="' . $this->id. '">' . check_plain($node->title) . '</span>';
   }
 }
 

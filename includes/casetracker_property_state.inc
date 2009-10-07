@@ -34,8 +34,8 @@ class casetracker_property_state extends casetracker_property {
    * 
    */
   function display($info) {
-    $state = casetracker_state_load($info[$this->id], $this->realm);
-    return '<span class="' . $this->realm. '">' . $this->name . ': <strong>'. $state->title . '</strong></span>';
+    $state = casetracker_state_load($info[$this->id]->value, $this->realm);
+    return '<span class="' . $this->realm. '">' . $state->title . '</span>';
   }
 }
 

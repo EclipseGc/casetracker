@@ -34,13 +34,13 @@ class casetracker_property_user extends casetracker_views_property {
     // On node preview the form logic can't translate assign_to back to a uid for
     // us so we need to be able handle it either way.
     // if (is_numeric($case->casetracker->assign_to)) {
-      $account = user_load(array('uid' => $info[$this->id]));
+      $account = user_load(array('uid' => $info[$this->id]->reference));
     // }
     // else {
     //   $account = user_load(array('name' => $case->casetracker->assign_to));
     // }
     
-    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. theme('username', $account) . '</strong></span>';
+    return '<span class="' . $this->id. '">' . theme('username', $account) . '</span>';
   }
 }
 

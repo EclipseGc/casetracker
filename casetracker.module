@@ -362,9 +362,9 @@ function casetracker_get_update($node, $type, $id) {
   if ($template_name = casetracker_is_case($node)) {
     $template = casetracker_template_load($template_name);
 
-    $result = db_query('SELECT property, value FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
-    while($row = db_fetch_array($result)) {
-      $info[$row['property']] = $row['value'];
+    $result = db_query('SELECT property, value, reference, previous FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
+    while($row = db_fetch_object($result)) {
+      $info[$row->property] = $row;
     }
 
     // TODO allow plugins to prepare the data after it's loaded.
@@ -745,7 +745,7 @@ function theme_casetracker_case_summary($template_name, $info) {
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
     $type->set($p);
-    $rows[] = array($type->display($info));
+    $rows[] = array($type->name .' : '. $type->display($info));
   }
   return theme('table', NULL, $rows, array('class' => 'summary'));
 }

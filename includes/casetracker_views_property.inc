@@ -75,11 +75,5 @@ class casetracker_views_property extends casetracker_property {
       '#default_value' => isset($node->casetracker->{$this->id}) ? null : $node->casetracker->{$this->id},
     );
   }
-  
-  /**
-   * 
-   */
-  function display($info) {
-    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. $info[$this->id] . '</strong></span>';
-  }
+
 }

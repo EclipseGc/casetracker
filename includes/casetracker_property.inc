@@ -34,6 +34,6 @@ class casetracker_property {
    * Generate a display for this property.
    */
   function display($info) {
-    return '<span class="' . $this->id. '">' . $this->name . ': <strong>'. check_plain($info[$this->id]['value']) . '</strong></span>';
+    return '<span class="' . $this->id. '">' . $check_plain($info[$this->id]->value) . '</span>';
   }
 }
