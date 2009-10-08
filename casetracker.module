@@ -336,11 +336,21 @@ function casetracker_comment(&$comment, $op) {
       //   db_query("DELETE FROM {casetracker_comment_status} WHERE cid = %d", $comment->cid);
       //   break;
       case 'view':
-        // If this is a preview the casetracker property will already be populated.
-        if (!isset($comment->casetracker)) {
-          $comment->casetracker = casetracker_get_update($node, 'comment', $comment->cid);
+        // If this is a preview the casetracker property will already be 
+        // populated but needs to be re-arranged a little.
+        if (isset($comment->casetracker)) {
+          $info = array();
+          foreach ($comment->casetracker as $k => $v) {
+            $info[$k] = new stdClass();
+            $info[$k]->id = $v;
+            $info[$k]->value = $v; // should be human readable
+          }
+          $comment->comment = theme('casetracker_case_summary', $template_name, $info) . $comment->comment;
         }
-        $comment->comment = theme('casetracker_case_summary', $template_name, $comment->casetracker) . $comment->comment;        
+        else {
+          $comment->casetracker = casetracker_get_update($node, 'comment', $comment->cid);
+          $comment->comment = theme('casetracker_case_summary', $template_name, $comment->casetracker) . $comment->comment;
+        }
         break;
     }
   }
