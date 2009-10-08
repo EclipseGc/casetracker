@@ -70,13 +70,18 @@ function casetracker_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'previous' => array(
-        'description' => 'The last update which changed this state',
+      'previous_type' => array(
+        'description' => 'The type of the last update which changed this state',
+        'type' => 'varchar',
+        'length' => 10,
+      ),
+      'previous_id' => array(
+        'description' => 'The id of the last update which changed this state',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-      ),
+      ),    
     ),
     'indexes' => array(
       'type_id' => array('type', 'id'),
