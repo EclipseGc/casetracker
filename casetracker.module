@@ -269,7 +269,7 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         casetracker_save_update($node, 'node', $node->vid, $node->casetracker, $node->is_new, $update);
         break;
       case 'load':
-        return array('casetracker' => casetracker_get_update($node, 'node', $node->vid));
+        return array('casetracker' => casetracker_get_update($node));
       case 'view':
         // todo handle preview.
         $node->content['casetracker_case_summary'] = array(
@@ -352,17 +352,34 @@ function casetracker_comment(&$comment, $op) {
  * @param $node
  *   The case node.
  * @param $type
- *   The type of the case update.
+ *   The type of the case update. If not set the current status will be 
+ *   retrieved.
  * @param $id
  *   The numeric id of the case update.
  * @return an array of the state changes in the update.
  */
-function casetracker_get_update($node, $type, $id) {
+function casetracker_get_update($node, $type = null, $id = null) {
   $info = array();
   if ($template_name = casetracker_is_case($node)) {
     $template = casetracker_template_load($template_name);
 
-    $result = db_query('SELECT property, value, reference, previous FROM {casetracker_case_status} WHERE nid = %d AND type = "%s" AND id = %d', $node->nid, $type, $id);
+    if (!isset($type) && !isset($id)) {
+      $current = db_fetch_object(db_query('SELECT type, id FROM {casetracker_case} WHERE nid = %d', $node->nid));
+      $type = $current->type;
+      $id = $current->id;
+    }
+
+    $result = db_query('SELECT current.property, current.value,
+        current.reference, previous.value as previous_value,
+        previous.reference as previous_reference
+      FROM {casetracker_case_status} current
+      LEFT JOIN {casetracker_case_status} previous
+      ON (current.nid = previous.nid 
+        AND current.type = previous.type 
+        AND current.previous = previous.id)
+      WHERE current.nid = %d AND current.type = "%s" AND current.id = %d',
+      $node->nid, $type, $id);
+
     while($row = db_fetch_object($result)) {
       $info[$row->property] = $row;
     }
@@ -401,13 +418,22 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
 
     // First we write the pointer to the current state only for new comments.
     if ($current) {
-      drupal_write_record('casetracker_case', $record);
+      // TODO figure out how we can avoid this looking query.
+      $update = db_result(db_query("select nid from {casetracker_case} where  nid = %d", $record['nid']));
+      if ($update) {
+        drupal_write_record('casetracker_case', $record, array('nid'));
+      }
+      else {
+        drupal_write_record('casetracker_case', $record);
+      }
     }
 
     // Then we write the state details.
     foreach ($template->properties as $property) {
       $record['property'] = $property->id;
-      $record['value'] = $info[$property->id];
+      $record['value'] = $info[$property->id]; // TODO should be human readable...
+      $record['reference'] = $info[$property->id];
+      $record['previous'] = $node->casetracker[$property->id]->reference;
 
       // Allow the plugin to take action before the record is written.
       $property->save($record, $current, $exits);
