@@ -1,7 +1,8 @@
 <?php
 
 /**
- * 
+ * Title property allows the title to be changed with a case update. Unlike
+ * properties it should not be used twice in the same template.
  */
 class casetracker_property_title extends casetracker_property {
 

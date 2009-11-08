@@ -1,8 +1,8 @@
 <?php
 
 /**
-* Base handler for views based properties.
-*/
+ * Base handler for views based properties.
+ */
 class casetracker_views_property extends casetracker_property {
   
   function setting_form(&$form, $base_table = null) {

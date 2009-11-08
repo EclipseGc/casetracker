@@ -1,7 +1,8 @@
 <?php
 
 /**
- * 
+ * The user property allows relation of a user to case. This is most commonly
+ * used to track to whom the case is assigned.
  */
 class casetracker_property_user extends casetracker_views_property {
 
