@@ -5,36 +5,35 @@
  * Implementation of hook_schema().
  */
 function casetracker_schema() {
+  $schema = array();
+
+  // Tables for the meta-data tracking system.
   $schema['casetracker_case'] = array(
     'fields' => array(
       'nid' => array(
-        'description' => 'The {node} for the case.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+	'description' => 'The {node} for the case.',
+	'type' => 'int',
+	'unsigned' => TRUE,
+	'not null' => TRUE,
+	'default' => 0,
       ),
-      'type' => array(
-        'description' => 'The type of update, generally NODE or COMMENT',
-        'type' => 'varchar',
-        'length' => 10,
-      ),
-      'id' => array(
-        'description' => 'Store the {comment} or {node} that the record relates to.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+      'cuid' => array(
+	'description' => 'The current {casetracker_update} of this case.',
+	'type' => 'int',
+	'unsigned' => TRUE,
+	'not null' => TRUE,
+	'default' => 0,
       ),
     ),
-    'indexes' => array(
-      'type_id' => array('type', 'id'),
-    ),
-    'primary key' => array('vid'),
   );
-
-  $schema['casetracker_case_status'] = array(
+  $schema['casetracker_update'] = array(
     'fields' => array(
+      'cuid' => array(
+	'type' => 'serial',
+	'description' => 'Case update id',
+	'unsigned' => TRUE,
+	'not null' => TRUE,
+      ),
       'nid' => array(
         'description' => 'The {node} for the case.',
         'type' => 'int',
@@ -50,6 +49,29 @@ function casetracker_schema() {
       'id' => array(
         'description' => 'Store the {comment} or {node} that the record relates to.',
         'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'previous_cuid' => array(
+        'description' => 'The previous {casetracker_update} of this case.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+     ),
+   ),
+    'indexes' => array(
+      'type_id' => array('type', 'id'),
+    ),
+    'primary key' => array('cuid'),
+  );
+  $schema['casetracker_update_property'] = array(
+    'fields' => array(
+      'cuid' => array(
+        'description' => 'The current {casetracker_update} of this case.',
+        'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -58,11 +80,6 @@ function casetracker_schema() {
         'type' => 'varchar',
         'length' => 10,
       ),
-      'value' => array(
-        'description' => 'Store the value of this update.',
-        'type' => 'varchar',
-        'length' => 255,
-      ),
       'reference' => array(
         'description' => 'Store the id of this update.',
         'type' => 'int',
@@ -70,21 +87,14 @@ function casetracker_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'previous_type' => array(
-        'description' => 'The type of the last update which changed this state',
+      'value' => array(
+        'description' => 'Store the value of this update.',
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
       ),
-      'previous_id' => array(
-        'description' => 'The id of the last update which changed this state',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),    
-    ),
+   ),
     'indexes' => array(
-      'type_id' => array('type', 'id'),
+      'cuid' => array('cuid'),
     ),
   );
 
@@ -143,7 +153,7 @@ function casetracker_schema() {
     'indexes' => array(
       'weight' => array('weight'),
     ),
-    'primary key' => array('csid'),
+    'primary key' => array('id'),
     'export' => array(
       'key' => 'name',
     ),
@@ -156,21 +166,7 @@ function casetracker_schema() {
  * Implementation of hook_install().
  */
 function casetracker_install() {
-  // Create tables.
   drupal_install_schema('casetracker');
-
-  // Create default case states.
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('High', 'priority', -1)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Normal', 'priority', 0)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Low', 'priority', 1)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Open', 'status', 0)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Resolved', 'status', 1)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Deferred', 'status', 2)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Duplicate', 'status', 3)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Closed', 'status', 4)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Bug', 'type', 0)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('Feature Request', 'type', 1)");
-  db_query("INSERT INTO {casetracker_case_states} (case_state_name, case_state_realm, weight) VALUES ('General Task', 'type', 2)");
 }
 
 /**

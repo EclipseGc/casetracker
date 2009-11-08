@@ -374,21 +374,28 @@ function casetracker_get_update($node, $type = null, $id = null) {
     $template = casetracker_template_load($template_name);
 
     if (!isset($type) && !isset($id)) {
-      $current = db_fetch_object(db_query('SELECT type, id FROM {casetracker_case} WHERE nid = %d', $node->nid));
-      $type = $current->type;
-      $id = $current->id;
-    }
-
-    $result = db_query('SELECT current.property, current.value,
+      $result = db_query('SELECT u.cuid, current.property, current.value,
         current.reference, previous.value as previous_value,
         previous.reference as previous_reference
-      FROM {casetracker_case_status} current
-      LEFT JOIN {casetracker_case_status} previous
-      ON (current.nid = previous.nid 
-        AND current.type = previous.type 
-        AND current.previous = previous.id)
-      WHERE current.nid = %d AND current.type = "%s" AND current.id = %d',
+      FROM {casetracker_case} c
+      JOIN {casetracker_update} u ON c.cuid = u.cuid
+      JOIN {casetracker_update_property} current ON u.cuid = current.cuid
+      LEFT JOIN {casetracker_update_property} previous
+        ON u.previous_cuid = previous.cuid
+      WHERE c.nid = %d',
+      $node->nid);
+    }
+    else {
+      $result = db_query('SELECT u.cuid, current.property, current.value,
+        current.reference, previous.value as previous_value,
+        previous.reference as previous_reference
+      FROM {casetracker_update} u
+      JOIN {casetracker_update_property} current ON u.cuid = current.cuid
+      LEFT JOIN {casetracker_update_property} previous
+        ON u.previous_cuid = previous.cuid
+      WHERE u.nid = %d AND u.type = "%s" AND u.id = %d',
       $node->nid, $type, $id);
+    }
 
     while($row = db_fetch_object($result)) {
       $info[$row->property] = $row;
@@ -426,7 +433,32 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
       'id' => $id,
     );
 
-    // First we write the pointer to the current state only for new comments.
+    // First, create a record in casetracker_update.
+    if (!$exists) {
+      if ($p = current($node->casetracker)) {
+	$record['previous_cuid'] = $p->cuid;
+      }
+      drupal_write_record('casetracker_update', $record);
+    }
+
+    // Second write the meta data.
+    foreach ($template->properties as $property) {
+      $record['property'] = $property->id;
+      $record['reference'] = $info[$property->id];
+      $record['value'] = $info[$property->id]; // TODO should be human readable...
+      
+      // Allow the plugin to take action before the record is written.
+      $property->save($record, $current, $exits);
+
+      if ($current || $exists) {
+        drupal_write_record('casetracker_update_property', $record);
+      }
+      else {
+        drupal_write_record('casetracker_update_property', $record, array('cuid', 'property'));
+      }
+    }
+
+    // Third, we write the pointer to the current state only for new comments.
     if ($current) {
       // TODO figure out how we can avoid this looking query.
       $update = db_result(db_query("select nid from {casetracker_case} where  nid = %d", $record['nid']));
@@ -435,24 +467,6 @@ function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exi
       }
       else {
         drupal_write_record('casetracker_case', $record);
-      }
-    }
-
-    // Then we write the state details.
-    foreach ($template->properties as $property) {
-      $record['property'] = $property->id;
-      $record['value'] = $info[$property->id]; // TODO should be human readable...
-      $record['reference'] = $info[$property->id];
-      $record['previous'] = $node->casetracker[$property->id]->reference;
-
-      // Allow the plugin to take action before the record is written.
-      $property->save($record, $current, $exits);
-
-      if ($current || $exists) {
-        drupal_write_record('casetracker_case_status', $record);
-      }
-      else {
-        drupal_write_record('casetracker_case_status', $record, array('type', 'id', 'property'));
       }
     }
   }
@@ -522,11 +536,13 @@ function casetracker_template_load($name) {
   ctools_include('export');
   ctools_include('plugins');
   $templates = ctools_export_load_object('casetracker_templates', 'names', array($name));
-  foreach ($templates[$name]->properties as $k => $v) {
-    $class = ctools_plugin_load_class('casetracker', 'properties', $v->type, 'handler');
-    $type = new $class();
-    $type->set($v);
-    $templates[$name]->properties[$k] = $type;
+  if (!empty($templates[$name]->properties)) {
+    foreach ($templates[$name]->properties as $k => $v) {
+      $class = ctools_plugin_load_class('casetracker', 'properties', $v->type, 'handler');
+      $type = new $class();
+      $type->set($v);
+      $templates[$name]->properties[$k] = $type;
+    }
   }
   return $templates[$name];
 }
