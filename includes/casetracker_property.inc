@@ -32,8 +32,19 @@ class casetracker_property {
 
   /**
    * Generate a display for this property.
+   * 
+   * @param $info
+   *  An array of state changes.
+   *
+   * @param $delta
+   *  Boolean indicating whether to show what the update changed or just the 
+   *  final status of the update.
    */
-  function display($info) {
-    return '<span class="' . $this->id. '">' . check_plain($info[$this->id]->value) . '</span>';
+  function display($info, $delta) {
+    $output = '<span class="' . $this->id. '">' . check_plain($info[$this->id]->value) . '</span>';
+    if ($delta) {
+      $output = '<span class="' . $this->id. '">' . check_plain($info[$this->id]->previous_value) . '</span> >> ' . $output;
+    }
+    return $output;
   }
 }

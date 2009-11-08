@@ -31,7 +31,9 @@ class casetracker_property_title extends casetracker_property {
   /**
    * 
    */
-  function display($info) {
+  /*
+  function display($info, $delta) {
     return '<span class="' . $this->id. '">' . check_plain($info[$this->id]->value) . '</span>';
   }
+  */
 }

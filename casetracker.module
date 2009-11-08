@@ -273,7 +273,7 @@ function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
       case 'view':
         // todo handle preview.
         $node->content['casetracker_case_summary'] = array(
-          '#value' => theme('casetracker_case_summary', $template_name, $node->casetracker),
+          '#value' => theme('casetracker_case_summary', $template_name, $node->casetracker, FALSE),
           '#weight' => -10
         );
         break;
@@ -784,11 +784,16 @@ function theme_casetracker_case_form_common($form) {
  * Theme the case summary shown at the beginning of a case's node.
  *
  * @param $template_name
+ *  Name of the template.
  *
  * @param $info
+ *  An array of state change objects, as from $node->casetracker
+ *
+ * @param $delta
+ *  Bool, set to TRUE to show the change of the update. Defaults to TRUE.
  *
  */
-function theme_casetracker_case_summary($template_name, $info) {
+function theme_casetracker_case_summary($template_name, $info, $delta = TRUE) {
   $rows = array();
   ctools_include('export'); 
   ctools_include('plugins');
@@ -797,7 +802,9 @@ function theme_casetracker_case_summary($template_name, $info) {
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
     $type = new $class();
     $type->set($p);
-    $rows[] = array($type->name .' : '. $type->display($info));
+    if ($o = $type->display($info, $delta)) {
+      $rows[] = array($type->name .' : '. $o);
+    }
   }
   return theme('table', NULL, $rows, array('class' => 'summary'));
 }

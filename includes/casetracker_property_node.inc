@@ -9,7 +9,7 @@ class casetracker_property_node extends casetracker_views_property {
     parent::setting_form(&$form, 'node');
   }
 
-  function display($info) {
+  function display($info, $delta) {
     // TODO test preview...
     $node = node_load(array('nid' => $info[$this->id]->value));
     return '<span class="' . $this->id. '">' . check_plain($node->title) . '</span>';
