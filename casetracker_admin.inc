@@ -78,58 +78,63 @@ function casetracker_template_edit($form_state, $template = NULL) {
     '#default_value' => isset($template) ? $template->name : NULL,
     '#description' => t('The name for this case template.'),
   );
-  $form['properties'] = array('#tree' => true);
-  foreach ($template->properties as $i => $p) {
-    $element = array('#type' => 'fieldset');
-    $element['type'] = array(
-      '#type' => 'value',
-      '#value' => $p->type,
-    );
-    $element["remove"] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Remove'),
-    );
-   $element['name'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Name'),
-      '#default_value' => $p->name,
-    );
-    $element['id'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Id'),
-      '#default_value' => $p->id,
-    );
-    $p->setting_form($element);
-    $form['properties'][] = $element;
-  }
 
   $form['submit'] = array(
     '#type' => 'submit', 
     '#value' => t('Submit'),
+    '#weight' => 10,
   );
 
-  $form['add'] = array(
-    '#tree' => true,
-    '#type' => 'fieldset',
-  );
-  $plugins = ctools_get_plugins('casetracker', 'properties');
-  $options = array();
-  foreach ($plugins as $k => $v) {
-    if (isset($v['title'])) {
-      $options[$k] = $v['title'];
+  if ($template) {
+    $form['properties'] = array('#tree' => true);
+    foreach ($template->properties as $i => $p) {
+      $element = array('#type' => 'fieldset');
+      $element['type'] = array(
+        '#type' => 'value',
+        '#value' => $p->type,
+      );
+      $element["remove"] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Remove'),
+      );
+      $element['name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Name'),
+        '#default_value' => $p->name,
+      );
+      $element['id'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Id'),
+        '#default_value' => $p->id,
+      );
+      $p->setting_form($element);
+      $form['properties'][] = $element;
     }
-  }
-  $form['add']['property'] = array(
-    '#options' => $options,
-    '#type' => 'select',
-    '#title' => 'Add property',
-  );
-  $form['add']['submit'] = array(
-    '#type' => 'submit', 
-    '#value' => t('Add'),
-    '#submit' => array('casetracker_property_add_submit'),
-  );
 
+    $form['add'] = array(
+      '#tree' => true,
+      '#type' => 'fieldset',
+      '#weight' => 20,
+    );
+    ctools_include('plugins');
+    $plugins = ctools_get_plugins('casetracker', 'properties');
+    $options = array();
+    foreach ($plugins as $k => $v) {
+      if (isset($v['title'])) {
+        $options[$k] = $v['title'];
+      }
+    }
+    $form['add']['property'] = array(
+      '#options' => $options,
+      '#type' => 'select',
+      '#title' => 'Add property',
+    );
+    $form['add']['submit'] = array(
+      '#type' => 'submit', 
+      '#value' => t('Add'),
+      '#submit' => array('casetracker_property_add_submit'),
+    );
+  }
   return $form;
 }
 
@@ -138,11 +143,14 @@ function casetracker_template_edit($form_state, $template = NULL) {
  */
 function casetracker_template_edit_submit($form, &$form_state) {
   $record = array('name' => $form_state['values']['name']);
-  $record['properties'] = array();
-  foreach ($form_state['values']['properties'] as $item) {
-    if ($item['remove'] !== 1) {
-      unset($item['remove']);
-      $record['properties'][] = (object)$item;
+
+  if ($form_state['values']['properties']) {
+    $record['properties'] = array();
+    foreach ($form_state['values']['properties'] as $item) {
+      if ($item['remove'] !== 1) {
+        unset($item['remove']);
+        $record['properties'][] = (object)$item;
+      }
     }
   }
 
