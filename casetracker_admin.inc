@@ -68,6 +68,8 @@ function casetracker_templates_page() {
 
 /**
  * Displays a form for adding or editing a case template.
+ *
+ * TODO when a new template is create redirect to it's page.
  */
 function casetracker_template_edit($form_state, $template = NULL) {
   $form = array();
@@ -86,29 +88,31 @@ function casetracker_template_edit($form_state, $template = NULL) {
   );
 
   if ($template) {
-    $form['properties'] = array('#tree' => true);
-    foreach ($template->properties as $i => $p) {
-      $element = array('#type' => 'fieldset');
-      $element['type'] = array(
-        '#type' => 'value',
-        '#value' => $p->type,
-      );
-      $element["remove"] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Remove'),
-      );
-      $element['name'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Name'),
-        '#default_value' => $p->name,
-      );
-      $element['id'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Id'),
-        '#default_value' => $p->id,
-      );
-      $p->setting_form($element);
-      $form['properties'][] = $element;
+    if (!empty($template->properties)) {
+      $form['properties'] = array('#tree' => true);
+      foreach ($template->properties as $i => $p) {
+	$element = array('#type' => 'fieldset');
+	$element['type'] = array(
+	  '#type' => 'value',
+	  '#value' => $p->type,
+	);
+	$element["remove"] = array(
+	  '#type' => 'checkbox',
+	  '#title' => t('Remove'),
+	);
+	$element['name'] = array(
+	  '#type' => 'textfield',
+	  '#title' => t('Name'),
+	  '#default_value' => $p->name,
+	);
+	$element['id'] = array(
+	  '#type' => 'textfield',
+	  '#title' => t('Id'),
+	  '#default_value' => $p->id,
+	);
+	$p->setting_form($element); // TODO provide capacity for ajax default settings
+	$form['properties'][] = $element;
+      }
     }
 
     $form['add'] = array(
@@ -177,6 +181,8 @@ function casetracker_property_add_submit($form, &$form_state) {
 
 /**
  * Displays an administrative overview of all case states available.
+ *
+ * TODO Currently realms that exist but aren't used aren't displayed at all.
  */
 function casetracker_states() {
   ctools_include('export');
