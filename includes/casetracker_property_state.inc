@@ -6,6 +6,7 @@
 class casetracker_property_state extends casetracker_property {
   
   function setting_form(&$form) {
+    parent::setting_form($form);
     $form['realm'] = array(
       '#type' => 'select',
       '#title' => t('Realm'),

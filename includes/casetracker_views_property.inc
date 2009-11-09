@@ -6,6 +6,7 @@
 class casetracker_views_property extends casetracker_property {
   
   function setting_form(&$form, $base_table = null) {
+    parent::setting_form($form);
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
