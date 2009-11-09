@@ -5,15 +5,32 @@
  * Implementation of hook_views_data().
  */
 function casetracker_views_data() {
+  $types = array_keys(node_get_types());
   $data = array();
-  $tables = array('casetracker_case', 'casetracker_case_states',);
-  foreach ($tables as $table) {
-    $function = "casetracker_views_data_$table";
-    $data += $function();
+  $data['casetracker_case']['table']['group'] = t('Case tracker');
+  $data['casetracker_case']['table']['join'] = array(
+    'node' = array(
+      'left_field' => 'nid',
+      'field' => 'nid',
+    );
+  );
+  foreach ($types as $type) {
+    if ($template = casetracker_is_case($type)) {
+      $casetracker_case[$template] = array(
+	'title' => $template,
+	'field' => array(
+	  'field' => 'cuid',
+	  'handler' => array('casetracker_views_handler_fields_case',
+	  'help' => t('Case information'),
+	),
+      );
+    }
   }
+  // todo casetracker_update base table
   return $data;
 }
 
+/*
 // ---------- Table casetracker_case
 function casetracker_views_data_casetracker_case() {
   $data['casetracker_case']['table']['group']  = t('Case Tracker');
@@ -120,26 +137,7 @@ function casetracker_views_data_casetracker_case() {
 
   return $data;
 }
-
-function casetracker_views_data_casetracker_case_states() {
-  $data['casetracker_case_states']['table']['group']  = t('Case Tracker');
-  $data['casetracker_case_states']['table']['join'] = array(
-    'node' => array(
-      'left_table' => 'casetracker_case',
-      'left_field' => 'case_status_id',
-      'field' => 'csid',
-    ),
-  );
-  $data['casetracker_case_states']['case_state_name'] = array(
-    'title' => t('Case Tracker: State Name'),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-      'help' => t('Sort by Case Tracker state name.'),
-    ),
-  );
-
-  return $data;
-}
+*/
 
 /**
  * Implementation of hook_views_data_alter().
@@ -170,6 +168,7 @@ function casetracker_views_handlers() {
       'path' => drupal_get_path('module', 'casetracker') .'/includes',
     ),
     'handlers' => array(
+      /*
       // ---------- Fields ----------
       // fields: casetracker_case
       'casetracker_views_handler_field_project_name' => array(
@@ -232,6 +231,7 @@ function casetracker_views_handlers() {
       'casetracker_views_handler_filter_project' => array(
         'parent' => 'views_handler_filter',
       )
+      */
     ),
   );
 }
