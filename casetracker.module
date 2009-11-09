@@ -20,7 +20,10 @@
  * Implementation of hook_views_api().
  */
 function casetracker_views_api() {
-  return array('api' => 2);
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'casetracker') .'/views',
+  );
 }
 
 function casetracker_ctools_plugin_api($module, $api) {
@@ -261,7 +264,7 @@ function casetracker_casetracker_properties() {
  */
 function casetracker_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
   // CASES
-  if ($template_name = casetracker_is_case($node)) {
+  if ($template_name = casetracker_is_case($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':
@@ -323,7 +326,7 @@ function casetracker_comment(&$comment, $op) {
   // Ensure we have the node object.
   $node = is_array($comment) ? node_load($comment['nid']) : node_load($comment->nid);
 
-  if ($template_name = casetracker_is_case($node)) {
+  if ($template_name = casetracker_is_case($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':
@@ -370,7 +373,7 @@ function casetracker_comment(&$comment, $op) {
  */
 function casetracker_get_update($node, $type = null, $id = null) {
   $info = array();
-  if ($template_name = casetracker_is_case($node)) {
+  if ($template_name = casetracker_is_case($node->type)) {
     $template = casetracker_template_load($template_name);
 
     if (!isset($type) && !isset($id)) {
@@ -424,7 +427,7 @@ function casetracker_get_update($node, $type = null, $id = null) {
  *   Set to TRUE if this is an update to an existing set of state record.
  */
 function casetracker_save_update($node, $type, $id, $info, $current = TRUE, $exists = FALSE) {  
-  if ($template_name = casetracker_is_case($node)) {
+  if ($template_name = casetracker_is_case($node->type)) {
     $template = casetracker_template_load($template_name);
 
     $record = array(
@@ -505,7 +508,7 @@ function casetracker_form_comment_form_alter(&$form, &$form_state) {
 function casetracker_case_form_common(&$form, $default_project = NULL) {
   $node = $form['#node'];
 
-  if ($template_name = casetracker_is_case($node)) {
+  if ($template_name = casetracker_is_case($node->type)) {
     $template = casetracker_template_load($template_name);
 
     // On preview the case will be an array, we want an object.
@@ -539,8 +542,7 @@ function casetracker_template_load($name) {
   if (!empty($templates[$name]->properties)) {
     foreach ($templates[$name]->properties as $k => $v) {
       $class = ctools_plugin_load_class('casetracker', 'properties', $v->type, 'handler');
-      $type = new $class();
-      $type->set($v);
+      $type = new $class($v);
       $templates[$name]->properties[$k] = $type;
     }
   }
@@ -800,8 +802,7 @@ function theme_casetracker_case_summary($template_name, $info, $delta = TRUE) {
   $templates = ctools_export_load_object('casetracker_templates', 'names', array($template_name));
   foreach ($templates[$template_name]->properties as $p) {
     $class = ctools_plugin_load_class('casetracker', 'properties', $p->type, 'handler');
-    $type = new $class();
-    $type->set($p);
+    $type = new $class($p);
     if ($o = $type->display($info, $delta)) {
       $rows[] = array($type->name .' : '. $o);
     }
@@ -850,9 +851,9 @@ function theme_casetracker_project_summary($project) {
  *   a node object
  * @return a template name or false.
  */
-function casetracker_is_case($node) {
+function casetracker_is_case($type) {
   $types = variable_get('casetracker_case_node_types', array());
-  if ($template_name = $types[$node->type]) {
+  if ($template_name = $types[$type]) {
     return $template_name;
   }
   return false;
