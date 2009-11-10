@@ -49,6 +49,19 @@ function casetracker_views_data() {
       );
     }
   }
+
+  $data['casetracker_update_property']['table']['join'] = array(
+    'casetracker_update' => array(
+      'left_field' => 'cuid',
+      'field' => 'cuid',
+    ),
+  );
+  $data['casetracker_update_property']['table']['group'] = t('Case Tracker');
+  $data['casetracker_update_property']['property'] = array(
+    'title' => t('Property'),
+    'help' => t('Type of case property'),
+    'field' => array('handler' => 'views_handler_field'),
+  );
   return $data;
 }
  
@@ -141,6 +154,7 @@ function casetracker_views_handlers() {
       'casetracker_views_handler_filter_project_published' => array(
         'parent' => 'views_handler_filter_equality',
       ),
+      */
 
       // filters: node-type
       'casetracker_views_handler_filter_case' => array(
@@ -149,7 +163,6 @@ function casetracker_views_handlers() {
       'casetracker_views_handler_filter_project' => array(
         'parent' => 'views_handler_filter',
       )
-      */
     ),
   );
 }
