@@ -59,4 +59,18 @@ class casetracker_property {
     }
     return $output;
   }
+
+  /**
+   * Let the field add itself to a view that's being built.
+   *
+   * @param $field
+   *  The field object, by reference.
+   */
+  function view_init(&$view, $field, $options) {
+    $handler = views_get_handler('casetracker_update_property', 'value', 'field');
+    if ($handler) {
+      $handler->init($view, $options);
+      return $handler;
+    }
+  }
 }

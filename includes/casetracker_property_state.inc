@@ -52,4 +52,3 @@ class casetracker_property_state extends casetracker_property {
     return $output;
   }
 }
-

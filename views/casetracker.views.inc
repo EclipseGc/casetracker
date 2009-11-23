@@ -17,10 +17,11 @@ function casetracker_views_data() {
   foreach ($types as $type) {
     if ($template = casetracker_is_case($type)) {
       $data['casetracker_case']['cuid'] = array(
-	'title' => $template,
+	'title' => $template, // TODO use human readable version.
 	'help' => t('Case update information.'),
 	'field' => array(
 	  'handler' => 'casetracker_views_handler_field_case',
+	  'template' => $template,
 	)
       );
     }
@@ -41,25 +42,31 @@ function casetracker_views_data() {
   foreach ($types as $type) {
     if ($template = casetracker_is_case($type)) {
       $data['casetracker_update']['cuid'] = array(
-	'title' => $template,
+	'title' => $template, // TODO use human readable version.
 	'help' => t('Case update information.'),
 	'field' => array(
 	  'handler' => 'casetracker_views_handler_field_case',
+	  'template' => $template,
 	),
       );
     }
   }
 
+  $data['casetracker_update_property']['table']['group'] = t('Case Tracker');
   $data['casetracker_update_property']['table']['join'] = array(
     'casetracker_update' => array(
       'left_field' => 'cuid',
       'field' => 'cuid',
     ),
   );
-  $data['casetracker_update_property']['table']['group'] = t('Case Tracker');
   $data['casetracker_update_property']['property'] = array(
     'title' => t('Property'),
     'help' => t('Type of case property'),
+    'field' => array('handler' => 'views_handler_field'),
+  );
+  $data['casetracker_update_property']['value'] = array(
+    'title' => t('Value'),
+    'help' => t('Cached value of a property'),
     'field' => array('handler' => 'views_handler_field'),
   );
   return $data;
@@ -69,6 +76,7 @@ function casetracker_views_data() {
  * Implementation of hook_views_data_alter().
  */
 function casetracker_views_data_alter(&$data) {
+  /*
   $data['node']['case'] = array(
     'title' => t('Case Tracker case'),
     'help' => t('Whether the node is a casetracker case'),
@@ -82,6 +90,13 @@ function casetracker_views_data_alter(&$data) {
     'filter' => array(
       'handler' => 'casetracker_views_handler_filter_project',
     ),
+  );
+  */
+  $data['casetracker_update_property']['state'] = array(
+    'title' => t('State'),
+    'help' => t('The state of the case'),
+    'real field' => 'reference',
+    'field' => array('handler' => 'views_handler_field'),
   );
 }
 
