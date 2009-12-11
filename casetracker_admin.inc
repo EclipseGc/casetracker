@@ -92,27 +92,27 @@ function casetracker_template_edit($form_state, $template = NULL) {
     if (!empty($template->properties)) {
       $form['properties'] = array('#tree' => true);
       foreach ($template->properties as $i => $p) {
-	$element = array('#type' => 'fieldset');
-	$element['type'] = array(
-	  '#type' => 'value',
-	  '#value' => $p->type,
-	);
-	$element["remove"] = array(
-	  '#type' => 'checkbox',
-	  '#title' => t('Remove'),
-	);
-	$element['name'] = array(
-	  '#type' => 'textfield',
-	  '#title' => t('Name'),
-	  '#default_value' => $p->name,
-	);
-	$element['id'] = array(
-	  '#type' => 'textfield',
-	  '#title' => t('Id'),
-	  '#default_value' => $p->id,
-	);
-	$p->setting_form($element); // TODO provide capacity for ajax default settings
-	$form['properties'][] = $element;
+        $element = array('#type' => 'fieldset');
+        $element['type'] = array(
+          '#type' => 'value',
+          '#value' => $p->type,
+        );
+        $element["remove"] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Remove'),
+        );
+        $element['name'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Name'),
+          '#default_value' => $p->name,
+        );
+        $element['id'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Id'),
+          '#default_value' => $p->id,
+        );
+        $p->setting_form($element); // TODO provide capacity for ajax default settings
+        $form['properties'][] = $element;
       }
     }
 
@@ -190,44 +190,50 @@ function casetracker_states() {
   $states = ctools_export_load_object('casetracker_states', 'all');
   $form = array('#theme' => 'casetracker_states_form');
   $form['states'] = array('#tree' => true);
-  foreach ($states as $s) {
-    $item = array();
-    $item['title'] = array(
-      '#value' => $s->title .' ('. $s->name .')',
-      '#title' => t('State'),
-    );
-    $item['realm'] = array(
-      '#type' => 'select',
-      '#title' => t('Realm'),
-      '#options' => casetracker_realm_list(),
-      '#default_value' => $s->realm,
-      '#attributes' => array('class' => 'realm-select realm-select-'.$s->realm),
-    );
-    $item['weight'] = array(
-      '#type' => 'weight',
-      '#title' => t('Weight'),
-      '#default_value' => $s->weight,
-      '#attributes' => array('class' => "state-weight state-weight-{$s->realm}"),
-    );
-    $item['type'] = array(
-      '#title' => t('Status'),
-      '#value' => $s->type,
-    );
-    if ($s->in_code_only) {
-      $ops = l(t('clone'), 'admin/settings/casetracker/states/'. $s->name .'/clone');
-      $ops .= ' | '. l(t('disable'), 'admin/settings/casetracker/states/'. $s->name .'/disable');
-    }
-    else {
-      $ops = l(t('edit'), 'admin/settings/casetracker/states/'. $s->name .'/edit');
-      $ops .= ' | '. l(t('delete'), 'admin/settings/casetracker/states/'. $s->name .'/delete');
-    }
-    $ops .= ' | '. l(t('export'), 'admin/settings/casetracker/states/'. $s->name .'/export');
-    $item['operations'] = array('#value' => $ops, '#title' => t('Operations'));
 
-    if (!isset($form['states'][$s->realm])) {
-      $form['states'][$s->realm] = array();
+  $realms = casetracker_realm_list();
+  foreach ($realms as $realm => $name) {
+    $form['states'][$realm] = array('#value' => $name);
+    // TODO add delete and edit links for realms.
+  }
+
+  if (!empty($states)) {
+    foreach ($states as $s) {
+      $item = array();
+      $item['title'] = array(
+	'#value' => $s->title .' ('. $s->name .')',
+	'#title' => t('State'),
+      );
+      $item['realm'] = array(
+	'#type' => 'select',
+	'#title' => t('Realm'),
+	'#options' => $realms,
+	'#default_value' => $s->realm,
+	'#attributes' => array('class' => 'realm-select realm-select-'.$s->realm),
+      );
+      $item['weight'] = array(
+	'#type' => 'weight',
+	'#title' => t('Weight'),
+	'#default_value' => $s->weight,
+	'#attributes' => array('class' => "state-weight state-weight-{$s->realm}"),
+      );
+      $item['type'] = array(
+	'#title' => t('Status'),
+	'#value' => $s->type,
+      );
+      if ($s->in_code_only) {
+	$ops = l(t('clone'), 'admin/settings/casetracker/states/'. $s->name .'/clone');
+	$ops .= ' | '. l(t('disable'), 'admin/settings/casetracker/states/'. $s->name .'/disable');
+      }
+      else {
+	$ops = l(t('edit'), 'admin/settings/casetracker/states/'. $s->name .'/edit');
+	$ops .= ' | '. l(t('delete'), 'admin/settings/casetracker/states/'. $s->name .'/delete');
+      }
+      $ops .= ' | '. l(t('export'), 'admin/settings/casetracker/states/'. $s->name .'/export');
+      $item['operations'] = array('#value' => $ops, '#title' => t('Operations'));
+
+      $form['states'][$s->realm][$s->name] = $item;
     }
-    $form['states'][$s->realm][$s->name] = $item;
   }
 
   $form['submit'] = array(
@@ -259,7 +265,6 @@ function casetracker_states() {
  * Theme states admin interface as table.
  */
 function theme_casetracker_states_form($form) {
-  $realms = casetracker_realm_list();
   $o = drupal_render($form['realm']) . drupal_render($form['submit']);
   $rows = array();
   $header = array();
@@ -270,9 +275,10 @@ function theme_casetracker_states_form($form) {
       // drupal_add_tabledrag('casetracker_states_admin', 'match', 'sibling', "realm-select", "realm-select-$realm", null, false);
     }
     $rows[] = array(array(
-      'data' => $realms[$realm], 
+      'data' => check_plain($form['states'][$realm]['#value']), 
       'colspan' => count($form['states'][$realm][$i]),
     ));
+    unset($form['states'][$realm]['#value']);
     foreach (element_children($form['states'][$realm]) as $i) {
       $row = array();
       foreach(element_children($form['states'][$realm][$i]) as $j) {

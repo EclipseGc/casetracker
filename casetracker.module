@@ -146,6 +146,7 @@ function casetracker_menu() {
     'page arguments' => array('casetracker_states', 4),
     'type' => MENU_LOCAL_TASK,
     'title' => 'States',
+    'weight' => 5,
     'description' => 'Add, edit and delete meta-data templates ',
   );
   $items['admin/settings/casetracker/states/list'] = array(
@@ -697,7 +698,7 @@ function casetracker_realm_list($reset = false) {
     $realms = array();
     foreach ($states as $i) {
       if (!isset($realms[$i->realm])) {
-        $realms[$i->realm->name] = $i->realm->title;
+        $realms[$i->realm] = $i->name;
       }
     }
     $realms = array_merge($realms, variable_get('casetracker_realms', array('status' => t('Status'), 'type' => t('Type'), 'priority' => t('Priority'))));
