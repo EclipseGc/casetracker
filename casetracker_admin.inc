@@ -37,6 +37,7 @@ function casetracker_settings() {
  */
 function casetracker_settings_submit($form, &$form_state) {
   variable_set('casetracker_case_node_types', $form_state['values']['types']);
+  drupal_set_message(t('Updated case tracker settings.'));
 }
 
 /**
