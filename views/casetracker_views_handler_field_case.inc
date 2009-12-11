@@ -27,7 +27,7 @@ class casetracker_views_handler_field_case extends views_handler_field {
    * place to do that after all handers have been initialized but before 
    * anything has beed built.
    *
-   * note: handler we add in this way won't have thier pre_query() method run.
+   * note: handlers we add in this way won't have thier pre_query() method run.
    */
   function pre_query() {
     $this->view->field += $this->casetracker_fields;
