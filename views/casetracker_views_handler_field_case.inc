@@ -7,7 +7,8 @@
 class casetracker_views_handler_field_case extends views_handler_field {
 
   /**
-   *
+   * The case handler is a meta handler that adds fields for other case
+   * elements to a view.
    */
   function init(&$view, $options) {
     $this->casetracker_fields = array();
@@ -21,7 +22,12 @@ class casetracker_views_handler_field_case extends views_handler_field {
   }
 
   /**
+   * Because of how handlers are initialized we have to stash the handlers we
+   * add somewhere and then merge them into place later. pre_query() provides a 
+   * place to do that after all handers have been initialized but before 
+   * anything has beed built.
    *
+   * note: handler we add in this way won't have thier pre_query() method run.
    */
   function pre_query() {
     $this->view->field += $this->casetracker_fields;
