@@ -182,8 +182,6 @@ function casetracker_property_add_submit($form, &$form_state) {
 
 /**
  * Displays an administrative overview of all case states available.
- *
- * TODO Currently realms that exist but aren't used aren't displayed at all.
  */
 function casetracker_states() {
   ctools_include('export');
